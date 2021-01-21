@@ -168,6 +168,7 @@ using namespace Scintilla;
  extern LexerModule lmCSV;
  extern LexerModule lmDart;
  extern LexerModule lmKotlin;
+ extern LexerModule lmLPeg;
  extern LexerModule lmTOML;
 
 
@@ -316,6 +317,7 @@ void AddEachLexer() {
   catalogueLexilla.AddLexerModule(&lmCSV);
   catalogueLexilla.AddLexerModule(&lmDart);
   catalogueLexilla.AddLexerModule(&lmKotlin);
+  catalogueLexilla.AddLexerModule(&lmLPeg);
   catalogueLexilla.AddLexerModule(&lmTOML);
 
 }

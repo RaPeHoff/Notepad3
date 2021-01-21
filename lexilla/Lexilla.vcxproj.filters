@@ -22,6 +22,15 @@
     <Filter Include="lexers_x">
       <UniqueIdentifier>{0087651a-f9f8-4b96-a61b-9d58c9eedada}</UniqueIdentifier>
     </Filter>
+    <Filter Include="luapeg_lexer">
+      <UniqueIdentifier>{e311b193-b6ff-41b2-afa4-6cb4e73ef1ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="luapeg_lexer\lua">
+      <UniqueIdentifier>{fbfd635a-88a7-4fba-b7dc-5e813f7df4a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="luapeg_lexer\lpeg">
+      <UniqueIdentifier>{abafcc70-5457-46ea-9985-6a97749538c8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Lexilla.h">
@@ -35,6 +44,105 @@
     </ClInclude>
     <ClInclude Include="src\lexers_x\LexerUtils.h">
       <Filter>lexers_x</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lapi.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lauxlib.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lcode.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lctype.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\ldebug.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\ldo.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lfunc.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lgc.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\llex.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\llimits.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lmem.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lobject.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lopcodes.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lparser.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lprefix.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lstate.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lstring.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\ltable.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\ltm.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lua.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lua.hpp">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\luaconf.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lualib.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lundump.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lvm.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lua\src\lzio.h">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lpeg\lpcap.h">
+      <Filter>luapeg_lexer\lpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lpeg\lpcode.h">
+      <Filter>luapeg_lexer\lpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lpeg\lpprint.h">
+      <Filter>luapeg_lexer\lpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lpeg\lptree.h">
+      <Filter>luapeg_lexer\lpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lpeg\lptypes.h">
+      <Filter>luapeg_lexer\lpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\lpeg\lpvm.h">
+      <Filter>luapeg_lexer\lpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="src\luapeg_lexer\LexLPeg.h">
+      <Filter>luapeg_lexer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +274,126 @@
     </ClCompile>
     <ClCompile Include="src\lexers_x\LexKotlin.cxx">
       <Filter>lexers_x</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lapi.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lauxlib.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lbaselib.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lbitlib.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lcode.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lcorolib.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lctype.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\ldblib.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\ldebug.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\ldo.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\ldump.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lfunc.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lgc.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\linit.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\liolib.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\llex.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lmathlib.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lmem.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\loadlib.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lobject.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lopcodes.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\loslib.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lparser.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lstate.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lstring.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lstrlib.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\ltable.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\ltablib.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\ltm.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lua.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lundump.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lutf8lib.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lvm.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lua\src\lzio.c">
+      <Filter>luapeg_lexer\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lpeg\lpcap.c">
+      <Filter>luapeg_lexer\lpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lpeg\lpcode.c">
+      <Filter>luapeg_lexer\lpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lpeg\lpprint.c">
+      <Filter>luapeg_lexer\lpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lpeg\lptree.c">
+      <Filter>luapeg_lexer\lpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\lpeg\lpvm.c">
+      <Filter>luapeg_lexer\lpeg</Filter>
+    </ClCompile>
+    <ClCompile Include="src\luapeg_lexer\LexLPeg.cxx">
+      <Filter>luapeg_lexer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

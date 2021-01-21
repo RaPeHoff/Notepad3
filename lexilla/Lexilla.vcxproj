@@ -23,6 +23,39 @@
     <ClInclude Include="src\lexers_x\LexerUtils.h" />
     <ClInclude Include="src\lexers_x\SciXLexer.h" />
     <ClInclude Include="src\Lexilla.h" />
+    <ClInclude Include="src\luapeg_lexer\LexLPeg.h" />
+    <ClInclude Include="src\luapeg_lexer\lpeg\lpcap.h" />
+    <ClInclude Include="src\luapeg_lexer\lpeg\lpcode.h" />
+    <ClInclude Include="src\luapeg_lexer\lpeg\lpprint.h" />
+    <ClInclude Include="src\luapeg_lexer\lpeg\lptree.h" />
+    <ClInclude Include="src\luapeg_lexer\lpeg\lptypes.h" />
+    <ClInclude Include="src\luapeg_lexer\lpeg\lpvm.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lapi.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lauxlib.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lcode.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lctype.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\ldebug.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\ldo.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lfunc.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lgc.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\llex.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\llimits.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lmem.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lobject.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lopcodes.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lparser.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lprefix.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lstate.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lstring.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\ltable.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\ltm.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lua.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lua.hpp" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\luaconf.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lualib.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lundump.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lvm.h" />
+    <ClInclude Include="src\luapeg_lexer\lua\src\lzio.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\scintilla\lexers\LexAsm.cxx" />
@@ -68,6 +101,46 @@
     <ClCompile Include="src\lexers_x\LexKotlin.cxx" />
     <ClCompile Include="src\lexers_x\LexTOML.cxx" />
     <ClCompile Include="src\Lexilla.cxx" />
+    <ClCompile Include="src\luapeg_lexer\LexLPeg.cxx" />
+    <ClCompile Include="src\luapeg_lexer\lpeg\lpcap.c" />
+    <ClCompile Include="src\luapeg_lexer\lpeg\lpcode.c" />
+    <ClCompile Include="src\luapeg_lexer\lpeg\lpprint.c" />
+    <ClCompile Include="src\luapeg_lexer\lpeg\lptree.c" />
+    <ClCompile Include="src\luapeg_lexer\lpeg\lpvm.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lapi.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lauxlib.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lbaselib.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lbitlib.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lcode.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lcorolib.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lctype.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\ldblib.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\ldebug.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\ldo.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\ldump.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lfunc.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lgc.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\linit.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\liolib.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\llex.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lmathlib.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lmem.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\loadlib.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lobject.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lopcodes.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\loslib.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lparser.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lstate.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lstring.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lstrlib.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\ltable.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\ltablib.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\ltm.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lua.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lundump.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lutf8lib.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lvm.c" />
+    <ClCompile Include="src\luapeg_lexer\lua\src\lzio.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\LexillaVersion.rc" />
@@ -157,7 +230,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>..\scintilla\include;..\scintilla\lexlib;src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\scintilla\include;..\scintilla\lexlib;src;src\luapeg_lexer\lua\src;src\luapeg_lexer\lua</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <FloatingPointModel>Fast</FloatingPointModel>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -181,7 +254,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>..\scintilla\include;..\scintilla\lexlib;src;ser\lexer_x</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\scintilla\include;..\scintilla\lexlib;src;src\luapeg_lexer\lua\src;src\luapeg_lexer\luaser\lexer_x</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
@@ -208,7 +281,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>..\scintilla\include;..\scintilla\lexlib;src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\scintilla\include;..\scintilla\lexlib;src;src\luapeg_lexer\lua\src;src\luapeg_lexer\lua</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <FloatingPointModel>Fast</FloatingPointModel>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -232,7 +305,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>..\scintilla\include;..\scintilla\lexlib;src;ser\lexer_x</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\scintilla\include;..\scintilla\lexlib;src;src\luapeg_lexer\lua\src;src\luapeg_lexer\luaser\lexer_x</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
