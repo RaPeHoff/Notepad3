@@ -1356,6 +1356,8 @@ void LoadSettings()
     Settings.EFR_Data.bNoFindWrap = IniSectionGetBool(IniSecSettings, L"NoFindWrap", Defaults.EFR_Data.bNoFindWrap);
     Defaults.EFR_Data.bTransformBS = false;
     Settings.EFR_Data.bTransformBS = IniSectionGetBool(IniSecSettings, L"FindTransformBS", Defaults.EFR_Data.bTransformBS);
+    Defaults.EFR_Data.bRegExprSearch = false;
+    Settings.EFR_Data.bRegExprSearch = IniSectionGetBool(IniSecSettings, L"RegExprSearch", Defaults.EFR_Data.bRegExprSearch);
     Defaults.EFR_Data.bWildcardSearch = false;
     Settings.EFR_Data.bWildcardSearch = IniSectionGetBool(IniSecSettings, L"WildcardSearch", Defaults.EFR_Data.bWildcardSearch);
     Defaults.EFR_Data.bOverlappingFind = false;
@@ -1510,6 +1512,7 @@ void LoadSettings()
     GET_BOOL_VALUE_FROM_INISECTION(SplitUndoTypingSeqOnLnBreak, true);
     GET_BOOL_VALUE_FROM_INISECTION(EditLayoutRTL, false);
     GET_BOOL_VALUE_FROM_INISECTION(DialogsLayoutRTL, false);
+    GET_BOOL_VALUE_FROM_INISECTION(PreferredLocale4DateFmt, false);
 
 #ifdef D_NP3_WIN10_DARK_MODE
     Defaults.WinThemeDarkMode = ShouldAppsUseDarkModeEx();
@@ -1791,6 +1794,11 @@ static bool _SaveSettings(bool bForceSaveSettings)
     } else {
         IniSectionDelete(IniSecSettings, L"FindTransformBS", false);
     }
+    if (Settings.EFR_Data.bRegExprSearch != Defaults.EFR_Data.bRegExprSearch) {
+        IniSectionSetBool(IniSecSettings, L"RegExprSearch", Settings.EFR_Data.bRegExprSearch);
+    } else {
+        IniSectionDelete(IniSecSettings, L"RegExprSearch", false);
+    }
     if (Settings.EFR_Data.bWildcardSearch != Defaults.EFR_Data.bWildcardSearch) {
         IniSectionSetBool(IniSecSettings, L"WildcardSearch", Settings.EFR_Data.bWildcardSearch);
     } else {
@@ -1936,6 +1944,7 @@ static bool _SaveSettings(bool bForceSaveSettings)
     SAVE_VALUE_IF_NOT_EQ_DEFAULT(Bool, SplitUndoTypingSeqOnLnBreak);
     SAVE_VALUE_IF_NOT_EQ_DEFAULT(Bool, EditLayoutRTL);
     SAVE_VALUE_IF_NOT_EQ_DEFAULT(Bool, DialogsLayoutRTL);
+    SAVE_VALUE_IF_NOT_EQ_DEFAULT(Bool, PreferredLocale4DateFmt);
 
 #ifdef D_NP3_WIN10_DARK_MODE
     SAVE_VALUE_IF_NOT_EQ_DEFAULT(Bool, WinThemeDarkMode);

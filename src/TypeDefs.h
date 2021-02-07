@@ -192,6 +192,7 @@ typedef struct _editfindreplace
     bool bReplaceClose;
     bool bOverlappingFind;
     bool bNoFindWrap;
+    bool bRegExprSearch;
     bool bWildcardSearch;
     bool bMarkOccurences;
     bool bHideNonMatchedLines;
@@ -200,9 +201,12 @@ typedef struct _editfindreplace
     char szFind[FNDRPL_BUFFER];
     char szReplace[FNDRPL_BUFFER];
 
-} EDITFINDREPLACE, *LPEDITFINDREPLACE, *LPCEDITFINDREPLACE;
+} EDITFINDREPLACE, *LPEDITFINDREPLACE;
 
-#define INIT_EFR_DATA  { 0, false, false, false, false, false, false, false, false, true, NULL, "", ""  }
+//typedef const EDITFINDREPLACE* CLPEDITFINDREPLACE;
+typedef const EDITFINDREPLACE* const CLPCEDITFINDREPLACE;
+
+#define INIT_EFR_DATA  { 0, false, false, false, false, false, false, false, false, false, true, NULL, "", "" }
 #define IDMSG_SWITCHTOFIND    300
 #define IDMSG_SWITCHTOREPLACE 301
 
@@ -505,6 +509,7 @@ typedef struct _settings_t
     bool EditLayoutRTL;
     bool DialogsLayoutRTL;
     int  FocusViewMarkerMode;
+    bool PreferredLocale4DateFmt;
 
 #ifdef D_NP3_WIN10_DARK_MODE
     bool WinThemeDarkMode;
