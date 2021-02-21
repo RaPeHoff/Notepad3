@@ -65,9 +65,12 @@ void DialogGrepWin(HWND hwnd, LPCWSTR searchPattern);
 void DialogAdminExe(HWND hwnd,bool);
 
 int  MessageBoxLng(UINT uType, UINT uidMsg, ...);
-INT_PTR InfoBoxLng(UINT uType, LPCWSTR lpstrSetting, UINT uidMsg, ...);
 DWORD MsgBoxLastError(LPCWSTR lpszMessage, DWORD dwErrID);
 DWORD DbgMsgBoxLastError(LPCWSTR lpszMessage, DWORD dwErrID);
+
+LONG InfoBoxLng(UINT uType, LPCWSTR lpstrSetting, UINT uidMsg, ...);
+#define INFOBOX_ANSW(_R_) LOWORD(_R_)
+#define INFOBOX_MODE(_R_) HIWORD(_R_)
 
 void SetWindowTitle(HWND hwnd, UINT uIDAppName, bool bIsElevated, UINT uIDUntitled,
                     LPCWSTR lpszFile, int iFormat, bool bModified,
@@ -77,11 +80,18 @@ void AppendAdditionalTitleInfo(LPCWSTR lpszAddTitleInfo);
 void SetWindowTransparentMode(HWND hwnd, bool bTransparentMode, int iOpacityLevel);
 void SetWindowLayoutRTL(HWND hwnd, bool bRTL);
 void SetWindowReadingRTL(HWND hwnd, bool bRTL);
+
+UINT ComboBox_GetTextLenth(HWND hDlg, int nIDDlgItem);
+UINT ComboBox_GetTextW2MB(HWND hDlg, int nIDDlgItem, LPSTR lpString, int nMaxCount);
+void ComboBox_SetTextMB2W(HWND hDlg, int nIDDlgItem, LPCSTR lpString);
+LRESULT ComboBox_AddStringMB2W(HWND hwnd, LPCSTR lpString);
+
 POINT GetCenterOfDlgInParent(const RECT* rcDlg, const RECT* rcParent);
 HWND GetParentOrDesktop(HWND hDlg);
 void CenterDlgInParent(HWND hDlg, HWND hDlgParent);
 void GetDlgPos(HWND hDlg, LPINT xDlg, LPINT yDlg);
 void SetDlgPos(HWND hDlg, int xDlg, int yDlg);
+
 
 inline void InitWindowCommon(HWND hwnd, bool bSetExplorerTheme)
 {

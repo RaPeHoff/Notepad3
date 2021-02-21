@@ -191,9 +191,6 @@
     <ClCompile Include="..\scintilla\lexers\LexInno.cxx">
       <Filter>lexers</Filter>
     </ClCompile>
-    <ClCompile Include="..\scintilla\lexers\LexJSON.cxx">
-      <Filter>lexers</Filter>
-    </ClCompile>
     <ClCompile Include="..\scintilla\lexers\LexLaTeX.cxx">
       <Filter>lexers</Filter>
     </ClCompile>
@@ -266,13 +263,16 @@
     <ClCompile Include="src\lexers_x\LexCSV.cxx">
       <Filter>lexers_x</Filter>
     </ClCompile>
-    <ClCompile Include="src\lexers_x\LexTOML.cxx">
-      <Filter>lexers_x</Filter>
-    </ClCompile>
     <ClCompile Include="src\lexers_x\LexDart.cxx">
       <Filter>lexers_x</Filter>
     </ClCompile>
+    <ClCompile Include="src\lexers_x\LexJSON.cxx">
+      <Filter>lexers_x</Filter>
+    </ClCompile>
     <ClCompile Include="src\lexers_x\LexKotlin.cxx">
+      <Filter>lexers_x</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lexers_x\LexTOML.cxx">
       <Filter>lexers_x</Filter>
     </ClCompile>
     <ClCompile Include="src\luapeg_lexer\lua\src\lapi.c">

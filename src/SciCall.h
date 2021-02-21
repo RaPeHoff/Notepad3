@@ -159,6 +159,7 @@ DeclareSciCallR1(GetLineSelStartPosition, GETLINESELSTARTPOSITION, DocPos, DocLn
 DeclareSciCallR1(GetLineSelEndPosition, GETLINESELENDPOSITION, DocPos, DocLn, line)
 
 DeclareSciCallR2(PositionFromPoint, POSITIONFROMPOINT, DocPos, int, pt_x, int, pt_y)
+DeclareSciCallR2(PositionFromPointClose, POSITIONFROMPOINTCLOSE, DocPos, int, pt_x, int, pt_y)
 DeclareSciCallR2(CharPositionFromPoint, CHARPOSITIONFROMPOINT, DocPos, int, pt_x, int, pt_y)
 DeclareSciCallR2(CharPositionFromPointClose, CHARPOSITIONFROMPOINTCLOSE, DocPos, int, pt_x, int, pt_y)
 DeclareSciCallR01(PointXFromPosition, POINTXFROMPOSITION, int, DocPos, position)
@@ -184,6 +185,8 @@ DeclareSciCallR0(GetSelectionMode, GETSELECTIONMODE, int)
 DeclareSciCallV1(SetSelectionMode, SETSELECTIONMODE, int, mode)
 DeclareSciCallR0(GetSelections, GETSELECTIONS, DocPosU)
 DeclareSciCallV2(SetSelection, SETSELECTION, DocPos, caretPos, DocPos, anchorPos)
+DeclareSciCallV1(SetSelectionStart, SETSELECTIONSTART, DocPos, anchorPos)
+DeclareSciCallV1(SetSelectionEnd, SETSELECTIONEND, DocPos, caretPos)
 DeclareSciCallV2(AddSelection, ADDSELECTION, DocPos, caretPos, DocPos, anchorPos)
 DeclareSciCallR0(GetMainSelection, GETMAINSELECTION, DocPosU)
 DeclareSciCallV1(SetMainSelection, SETMAINSELECTION, DocPosU, selnum)
@@ -639,7 +642,7 @@ DeclareSciCallR0(IsSelectionRectangle, SELECTIONISRECTANGLE, bool)
 #define Sci_GetNetLineLength(line) (SciCall_GetLineEndPosition(line) - SciCall_PositionFromLine(line))
 
 //~#define Sci_GetDocEndPosition() (SciCall_GetTextLength() - 1)
-#define Sci_GetDocEndPosition() SciCall_GetLineEndPosition(SciCall_GetLineCount())
+#define Sci_GetDocEndPosition() SciCall_PositionAfter(SciCall_GetTextLength())
 
 #define Sci_ClampAlpha(alpha) clampi((alpha), SC_ALPHA_TRANSPARENT, /*SC_ALPHA_OPAQUE*/SC_ALPHA_NOALPHA)
 

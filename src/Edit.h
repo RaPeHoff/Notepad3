@@ -121,7 +121,6 @@ void EditUpdateIndicators(DocPos startPos, DocPos endPos, bool bClearOnly);
 void EditSetAccelWordNav(HWND hwnd,bool);
 bool EditAutoCompleteWord(HWND hwnd, bool autoInsert);
 bool EditCheckNewLineInACFillUps();
-void EditShowZeroLengthCallTip(HWND hwnd, DocPos iPosition);
 void EditGetBookmarkList(HWND hwnd,LPWSTR pszBookMarks,int cchLength);
 void EditSetBookmarkList(HWND hwnd,LPCWSTR pszBookMarks);
 void EditBookmarkNext(HWND hwnd, const DocLn iLine);
@@ -133,6 +132,13 @@ void EditBookMarkLineRange(HWND hwnd);
 void EditDeleteMarkerInSelection();
 void EditSelectionMultiSelectAll();
 void EditSelectionMultiSelectAllEx(CLPCEDITFINDREPLACE edFndRpl);
+
+// maybe removed beyond next release
+//#define _SAVE_TARGET_RANGE_  DocPos const _saveTargetBeg_ = SciCall_GetTargetStart();\
+//                             DocPos const _saveTargetEnd_ = SciCall_GetTargetEnd()
+//#define _RESTORE_TARGET_RANGE_ SciCall_SetTargetRange(_saveTargetBeg_, _saveTargetEnd_)
+#define _SAVE_TARGET_RANGE_ 
+#define _RESTORE_TARGET_RANGE_ 
 
 //
 //  Folding Functions

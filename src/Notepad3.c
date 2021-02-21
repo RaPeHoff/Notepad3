@@ -1933,9 +1933,10 @@ static void  _InitializeSciEditCtrl(HWND hwndEditCtrl)
     SendMessage(hwndEditCtrl, SCI_SETCOMMANDEVENTS, false, 0); // speedup folding
     SendMessage(hwndEditCtrl, SCI_SETCODEPAGE, (WPARAM)SC_CP_UTF8, 0); // fixed internal UTF-8 (Sci:default)
 
+    SendMessage(hwndEditCtrl, SCI_SETMARGINS, NUMBER_OF_MARGINS, 0);
     SendMessage(hwndEditCtrl, SCI_SETEOLMODE, Settings.DefaultEOLMode, 0);
     SendMessage(hwndEditCtrl, SCI_SETPASTECONVERTENDINGS, true, 0);
-    SendMessage(hwndEditCtrl, SCI_USEPOPUP, false, 0);
+    SendMessage(hwndEditCtrl, SCI_USEPOPUP, SC_POPUP_TEXT, 0);
     SendMessage(hwndEditCtrl, SCI_SETSCROLLWIDTH, 1, 0);
     SendMessage(hwndEditCtrl, SCI_SETSCROLLWIDTHTRACKING, true, 0);
     SendMessage(hwndEditCtrl, SCI_SETENDATLASTLINE, true, 0);
@@ -2085,8 +2086,6 @@ static void  _InitializeSciEditCtrl(HWND hwndEditCtrl)
     // word delimiter handling
     EditInitWordDelimiter(hwndEditCtrl);
     EditSetAccelWordNav(hwndEditCtrl, Settings.AccelWordNavigation);
-
-    UpdateMarginWidth();
 }
 
 
@@ -2395,6 +2394,7 @@ static HBITMAP LoadBitmapFile(LPCWSTR path)
     int height = 16;
     if (hbmp) {
         BITMAP bmp;
+        ZeroMemory(&bmp, sizeof(BITMAP));
         GetObject(hbmp, sizeof(BITMAP), &bmp);
         height = bmp.bmHeight;
         bDimOK = (bmp.bmWidth >= (height * NUMTOOLBITMAPS));
@@ -2417,6 +2417,7 @@ static HBITMAP LoadBitmapFile(LPCWSTR path)
 static HIMAGELIST CreateScaledImageListFromBitmap(HWND hWnd, HBITMAP hBmp)
 {
     BITMAP bmp;
+    ZeroMemory(&bmp, sizeof(BITMAP));
     GetObject(hBmp, sizeof(BITMAP), &bmp);
 
     int const mod = bmp.bmWidth % NUMTOOLBITMAPS;
@@ -2678,12 +2679,13 @@ void CreateBars(HWND hwnd, HINSTANCE hInstance)
 #endif
 
     REBARINFO rbi;
+    ZeroMemory(&rbi, sizeof(REBARINFO));
     rbi.cbSize = sizeof(REBARINFO);
     rbi.fMask  = 0;
     rbi.himl   = (HIMAGELIST)NULL;
     SendMessage(Globals.hwndRebar, RB_SETBARINFO, 0, (LPARAM)&rbi);
 
-    RECT rc;
+    RECT rc = {0, 0, 0, 0 };
     SendMessage(Globals.hwndToolbar, TB_GETITEMRECT, 0, (LPARAM)&rc);
     //SendMessage(Globals.hwndToolbar,TB_SETINDENT,2,0);
 
@@ -3227,6 +3229,7 @@ LRESULT MsgContextMenu(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
 {
     bool const bMargin = (SCN_MARGINRIGHTCLICK == umsg);
     int const nID = bMargin ? IDC_MARGIN : GetDlgCtrlID((HWND)wParam);
+
     if ((nID != IDC_MARGIN) && (nID != IDC_EDIT) && (nID != IDC_STATUSBAR) && (nID != IDC_REBAR) && (nID != IDC_TOOLBAR)) {
         return DefWindowProc(hwnd, umsg, wParam, lParam);
     }
@@ -3240,56 +3243,58 @@ LRESULT MsgContextMenu(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
     HMENU const hMenuCtx = LoadMenu(Globals.hLngResContainer, MAKEINTRESOURCE(IDR_MUI_POPUPMENU));
     //SetMenuDefaultItem(GetSubMenu(hmenu,1),0,false);
 
-    POINT pt;
-    pt.x = (int)(short)LOWORD(lParam);
-    pt.y = (int)(short)HIWORD(lParam);
+    POINT pt = { 0, 0 };
+    pt.x = (int)((short)LOWORD(bMargin ? wParam : lParam));
+    pt.y = (int)((short)HIWORD(bMargin ? wParam : lParam));
+#define IS_CTX_PT_VALID(P) (((P).x != -1 || (P).y != -1))
 
-    int imenu = 0;
-
-    // modify configured items
-    HMENU const hStdCtxMenu = GetSubMenu(hMenuCtx, imenu);
-    if (StrIsNotEmpty(Settings2.WebTmpl1MenuName)) {
-        ModifyMenu(hStdCtxMenu, CMD_WEBACTION1, MF_BYCOMMAND | MF_STRING, CMD_WEBACTION1, Settings2.WebTmpl1MenuName);
-    }
-    if (StrIsNotEmpty(Settings2.WebTmpl2MenuName)) {
-        ModifyMenu(hStdCtxMenu, CMD_WEBACTION2, MF_BYCOMMAND | MF_STRING, CMD_WEBACTION2, Settings2.WebTmpl2MenuName);
-    }
+    typedef enum { MNU_NONE = -1, MNU_EDIT = 0, MNU_BAR = 1, MNU_MARGIN = 2, MNU_TRAY = 3 } mnu_t;
+    mnu_t imenu = MNU_NONE;
 
     switch (nID) {
     case IDC_EDIT: {
-        if (SciCall_IsSelectionEmpty() && (pt.x != -1) && (pt.y != -1)) {
-            POINT ptc;
-            ptc.x = pt.x;
-            ptc.y = pt.y;
-            ScreenToClient(Globals.hwndEdit, &ptc);
-            //~SciCall_GotoPos(SciCall_PositionFromPoint(ptc.x, ptc.y));
-        }
 
-        if (pt.x == -1 && pt.y == -1) {
+        if (!IS_CTX_PT_VALID(pt)) {
+            // caused by keypoard near caret pos
             DocPos const iCurrentPos = SciCall_GetCurrentPos();
             pt.x = (LONG)SciCall_PointXFromPosition(iCurrentPos);
             pt.y = (LONG)SciCall_PointYFromPosition(iCurrentPos);
-            ClientToScreen(Globals.hwndEdit, &pt);
+        } else {
+            ScreenToClient(Globals.hwndEdit, &pt);
         }
 
-        DocLn const curLn = Sci_GetCurrentLineNumber();
+        DocPos const iCurrentPos = SciCall_PositionFromPoint(pt.x, pt.y);
+        DocLn const curLn = SciCall_LineFromPosition(iCurrentPos);
         int const bitmask = SciCall_MarkerGet(curLn) & OCCURRENCE_MARKER_BITMASK() & ~(1 << MARKER_NP3_BOOKMARK);
-        imenu = (bitmask && ((Settings.FocusViewMarkerMode & FVMM_LN_BACKGR) || !Settings.ShowBookmarkMargin)) ? 2 : 0;
+        imenu = (bitmask && ((Settings.FocusViewMarkerMode & FVMM_LN_BACKGR) || !Settings.ShowBookmarkMargin)) ? MNU_MARGIN : MNU_EDIT;
+
+        if (imenu == MNU_EDIT) {
+            // modify configured items
+            HMENU const hStdCtxMenu = GetSubMenu(hMenuCtx, imenu);
+            if (StrIsNotEmpty(Settings2.WebTmpl1MenuName)) {
+                ModifyMenu(hStdCtxMenu, CMD_WEBACTION1, MF_BYCOMMAND | MF_STRING, CMD_WEBACTION1, Settings2.WebTmpl1MenuName);
+            }
+            if (StrIsNotEmpty(Settings2.WebTmpl2MenuName)) {
+                ModifyMenu(hStdCtxMenu, CMD_WEBACTION2, MF_BYCOMMAND | MF_STRING, CMD_WEBACTION2, Settings2.WebTmpl2MenuName);
+            }
+        }
+        // back to screen coordinates for menu display
+        ClientToScreen(Globals.hwndEdit, &pt);
     }
     break;
 
     case IDC_TOOLBAR:
     case IDC_STATUSBAR:
     case IDC_REBAR: {
-        if ((pt.x == -1) && (pt.y == -1)) {
+        if (!IS_CTX_PT_VALID(pt)) {
             GetCursorPos(&pt);
         }
-        imenu = 1;
+        imenu = MNU_BAR;
     }
     break;
 
     case IDC_MARGIN: {
-        if ((pt.x == -1) && (pt.y == -1)) {
+        if (!IS_CTX_PT_VALID(pt)) {
             GetCursorPos(&pt);
         }
 
@@ -3300,30 +3305,27 @@ LRESULT MsgContextMenu(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
         EnableCmd(hMenuCtx, IDM_EDIT_COPY_MARKED, bitmask);
         EnableCmd(hMenuCtx, IDM_EDIT_DELETE_MARKED, bitmask);
 
-        //DocLn const curLn = Sci_GetCurrentLineNumber();
-        const SCNotification* const scn = (SCNotification*)wParam;
+        const SCNotification* const scn = (SCNotification*)lParam;
         switch (scn->margin) {
         case MARGIN_SCI_FOLDING:
-        //[[fallthrough]];
-        case MARGIN_SCI_LINENUM:
-        //[[fallthrough]];
         case MARGIN_SCI_BOOKMRK:
-            imenu = 2;
+        case MARGIN_SCI_LINENUM:
+            imenu = MNU_MARGIN;
             break;
         default:
-            imenu = 0;
             break;
         }
     }
     break;
     }
 
-    TrackPopupMenuEx(GetSubMenu(hMenuCtx, imenu),
-                     TPM_LEFTBUTTON | TPM_RIGHTBUTTON, pt.x + 1, pt.y + 1, hwnd, NULL);
-
+    if (imenu != MNU_NONE) {
+        TrackPopupMenuEx(GetSubMenu(hMenuCtx, imenu),
+                         TPM_LEFTBUTTON | TPM_RIGHTBUTTON, pt.x + 1, pt.y + 1, hwnd, NULL);
+    }
     DestroyMenu(hMenuCtx);
 
-    return (bMargin ? !0 : 0);
+    return (imenu != MNU_NONE) ? !0 : 0;
 }
 
 //=============================================================================
@@ -3345,7 +3347,7 @@ LRESULT MsgChangeNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
         bool bRevertFile = (FileWatching.FileWatchingMode == FWM_AUTORELOAD && !GetDocModified());
 
         if (!bRevertFile) {
-            INT_PTR const answer = InfoBoxLng(MB_YESNO | MB_ICONWARNING, NULL, IDS_MUI_FILECHANGENOTIFY);
+            WORD const answer = INFOBOX_ANSW(InfoBoxLng(MB_YESNO | MB_ICONWARNING, NULL, IDS_MUI_FILECHANGENOTIFY));
             bRevertFile = ((IDOK == answer) || (IDYES == answer));
         }
 
@@ -3362,7 +3364,7 @@ LRESULT MsgChangeNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
             InstallFileWatching(true);
         }
     } else {
-        INT_PTR const answer = InfoBoxLng(MB_YESNO | MB_ICONWARNING, NULL, IDS_MUI_FILECHANGENOTIFY2);
+        WORD const answer = INFOBOX_ANSW(InfoBoxLng(MB_YESNO | MB_ICONWARNING, NULL, IDS_MUI_FILECHANGENOTIFY2));
         if ((IDOK == answer) || (IDYES == answer)) {
             FileSave(true, false, false, false, Flags.bPreserveFileModTime);
         } else if (!PathIsExistingFile(Globals.CurrentFile)) {
@@ -3465,6 +3467,153 @@ LRESULT MsgExitMenuLoop(HWND hwnd, WPARAM wParam)
     }
     return (LRESULT)wParam;
 }
+
+
+static void _GetStreamCommentStrgs(LPWSTR beg_out, LPWSTR end_out, size_t maxlen)
+{
+
+    if (beg_out && end_out && maxlen) {
+
+        switch (SciCall_GetLexer()) {
+        case SCLEX_AVS:
+        case SCLEX_CPP:
+        case SCLEX_CSS:
+        case SCLEX_D: // L"/+", L"+/" could also be used instead
+        case SCLEX_DART:
+        case SCLEX_HTML:
+        case SCLEX_JSON:
+        case SCLEX_KOTLIN:
+        case SCLEX_NSIS:
+        case SCLEX_RUST:
+        case SCLEX_SQL:
+        case SCLEX_VHDL:
+        case SCLEX_XML:
+            StringCchCopy(beg_out, maxlen, L"/*");
+            StringCchCopy(end_out, maxlen, L"*/");
+            break;
+        case SCLEX_INNOSETUP:
+        case SCLEX_PASCAL:
+            StringCchCopy(beg_out, maxlen, L"{");
+            StringCchCopy(end_out, maxlen, L"}");
+            break;
+        case SCLEX_LUA:
+            StringCchCopy(beg_out, maxlen, L"--[[");
+            StringCchCopy(end_out, maxlen, L"]]");
+            break;
+        case SCLEX_COFFEESCRIPT:
+            StringCchCopy(beg_out, maxlen, L"###");
+            StringCchCopy(end_out, maxlen, L"###");
+            break;
+        case SCLEX_MATLAB:
+            StringCchCopy(beg_out, maxlen, L"%{");
+            StringCchCopy(end_out, maxlen, L"%}");
+            break;
+        // ------------------
+        case SCLEX_NULL:
+        case SCLEX_AHKL:
+        case SCLEX_ASM:
+        case SCLEX_AU3:
+        case SCLEX_BASH:
+        case SCLEX_BATCH:
+        case SCLEX_CMAKE:
+        case SCLEX_CONF:
+        case SCLEX_DIFF:
+        case SCLEX_LATEX:
+        case SCLEX_MAKEFILE:
+        case SCLEX_MARKDOWN:
+        case SCLEX_NIM:
+        case SCLEX_PERL:
+        case SCLEX_POWERSHELL:
+        case SCLEX_PROPERTIES:
+        case SCLEX_PYTHON:
+        case SCLEX_R:
+        case SCLEX_REGISTRY:
+        case SCLEX_RUBY:
+        case SCLEX_TCL:
+        case SCLEX_TOML:
+        case SCLEX_VB:
+        case SCLEX_VBSCRIPT:
+        case SCLEX_YAML:
+        default:
+            StringCchCopy(beg_out, maxlen, L"");
+            StringCchCopy(end_out, maxlen, L"");
+            break;
+        }
+    }
+}
+
+
+static bool _GetLineCommentStrg(LPWSTR pre_out, size_t maxlen)
+{
+    if (pre_out && maxlen) {
+
+        switch (SciCall_GetLexer()) {
+        case SCLEX_CPP:
+        case SCLEX_D:
+        case SCLEX_DART:
+        case SCLEX_HTML:
+        case SCLEX_JSON:
+        case SCLEX_KOTLIN:
+        case SCLEX_PASCAL:
+        case SCLEX_RUST:
+        case SCLEX_XML:
+            StringCchCopy(pre_out, maxlen, L"//");
+            return false;
+        case SCLEX_VB:
+        case SCLEX_VBSCRIPT:
+            StringCchCopy(pre_out, maxlen, L"'");
+            return false;
+        case SCLEX_AVS:
+        case SCLEX_BASH:
+        case SCLEX_CMAKE:
+        case SCLEX_COFFEESCRIPT:
+        case SCLEX_CONF:
+        case SCLEX_MAKEFILE:
+        case SCLEX_NIM:
+        case SCLEX_PERL:
+        case SCLEX_POWERSHELL:
+        case SCLEX_PYTHON:
+        case SCLEX_R:
+        case SCLEX_RUBY:
+        case SCLEX_TCL:
+        case SCLEX_TOML:
+        case SCLEX_YAML:
+            StringCchCopy(pre_out, maxlen, L"#");
+            return true;
+        case SCLEX_AHKL:
+        case SCLEX_ASM:
+        case SCLEX_AU3:
+        case SCLEX_INNOSETUP:
+        case SCLEX_NSIS: // "#" could also be used instead
+        case SCLEX_PROPERTIES:
+        case SCLEX_REGISTRY:
+            StringCchCopy(pre_out, maxlen, L";");
+            return true;
+        case SCLEX_LUA:
+        case SCLEX_SQL:
+        case SCLEX_VHDL:
+            StringCchCopy(pre_out, maxlen, L"--");
+            return true;
+        case SCLEX_BATCH: // "::" could also be used instead
+            StringCchCopy(pre_out, maxlen, L"rem ");
+            return true;
+        case SCLEX_LATEX:
+        case SCLEX_MATLAB:
+            StringCchCopy(pre_out, maxlen, L"%");
+            return true;
+        // ------------------
+        case SCLEX_NULL:
+        case SCLEX_CSS:
+        case SCLEX_DIFF:
+        case SCLEX_MARKDOWN:
+        default:
+            StringCchCopy(pre_out, maxlen, L"");
+            break;
+        }
+    }
+    return false;
+}
+
 
 
 //=============================================================================
@@ -3640,17 +3789,12 @@ LRESULT MsgInitMenu(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     EnableCmd(hmenu, IDM_VIEW_SHOWEXCERPT, !se);
 
-    i = max_i(SCLEX_NULL, SciCall_GetLexer());
+    WCHAR cmnt[8];
+    _GetLineCommentStrg(cmnt, COUNTOF(cmnt));
+    EnableCmd(hmenu, IDM_EDIT_LINECOMMENT, StrIsNotEmpty(cmnt) && !ro);
 
-    EnableCmd(hmenu, IDM_EDIT_LINECOMMENT,
-              !(i == SCLEX_NULL || i == SCLEX_CSS || i == SCLEX_DIFF || i == SCLEX_MARKDOWN || i == SCLEX_JSON) && !ro);
-
-    EnableCmd(hmenu, IDM_EDIT_STREAMCOMMENT,
-              !(i == SCLEX_NULL || i == SCLEX_VBSCRIPT || i == SCLEX_MAKEFILE || i == SCLEX_VB || i == SCLEX_ASM ||
-                i == SCLEX_PERL || i == SCLEX_PYTHON || i == SCLEX_PROPERTIES || i == SCLEX_CONF ||
-                i == SCLEX_POWERSHELL || i == SCLEX_BATCH || i == SCLEX_DIFF || i == SCLEX_BASH || i == SCLEX_TCL ||
-                i == SCLEX_AU3 || i == SCLEX_LATEX || i == SCLEX_AHKL || i == SCLEX_RUBY || i == SCLEX_CMAKE || i == SCLEX_MARKDOWN ||
-                i == SCLEX_YAML || i == SCLEX_REGISTRY || i == SCLEX_NIM || i == SCLEX_TOML) && !ro);
+    _GetStreamCommentStrgs(cmnt, cmnt, COUNTOF(cmnt));
+    EnableCmd(hmenu, IDM_EDIT_STREAMCOMMENT, StrIsNotEmpty(cmnt) && !ro);
 
     EnableCmd(hmenu, CMD_INSERTNEWLINE, !ro);
     EnableCmd(hmenu, IDM_EDIT_INSERT_TAG, !ro);
@@ -3996,7 +4140,7 @@ LRESULT MsgCommand(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
 
     case IDM_FILE_REVERT:
         if (GetDocModified()) {
-            INT_PTR const answer = InfoBoxLng(MB_YESNO | MB_ICONQUESTION, NULL, IDS_MUI_ASK_REVERT);
+            WORD const answer = INFOBOX_ANSW(InfoBoxLng(MB_YESNO | MB_ICONQUESTION, NULL, IDS_MUI_ASK_REVERT));
             if (!((IDOK == answer) || (IDYES == answer))) {
                 break;
             }
@@ -4320,7 +4464,7 @@ LRESULT MsgCommand(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
             cpi_enc_t iNewEncoding = Encoding_MapSignature(Encoding_GetCurrent());
 
             if (GetDocModified()) {
-                INT_PTR const answer = InfoBoxLng(MB_YESNO | MB_ICONQUESTION, NULL, IDS_MUI_ASK_RECODE);
+                WORD const answer = INFOBOX_ANSW(InfoBoxLng(MB_YESNO | MB_ICONQUESTION, NULL, IDS_MUI_ASK_RECODE));
                 if (!((IDOK == answer) || (IDYES == answer))) {
                     break;
                 }
@@ -4419,7 +4563,7 @@ LRESULT MsgCommand(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
         }
         if (SciCall_IsSelectionEmpty()) {
             if (!HandleHotSpotURLClicked(SciCall_GetCurrentPos(), COPY_HYPERLINK) &&
-                !Settings2.NoCopyLineOnEmptySelection) {
+                    !Settings2.NoCopyLineOnEmptySelection) {
                 if (Sci_GetNetLineLength(Sci_GetCurrentLineNumber()) > 0) {
                     SciCall_CopyAllowLine(); // (!) VisualStudio behavior
                     // On Windows, an extra "MSDEVLineSelect" marker is added to the clipboard
@@ -4868,130 +5012,21 @@ LRESULT MsgCommand(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
 
 
     case IDM_EDIT_LINECOMMENT: {
-        switch (SciCall_GetLexer()) {
-        case SCLEX_CPP:
-        case SCLEX_D:
-        case SCLEX_HTML:
-        case SCLEX_PASCAL:
-        case SCLEX_RUST:
-        case SCLEX_XML:
-            EditToggleLineComments(Globals.hwndEdit, L"//", false);
-            break;
-        case SCLEX_VB:
-        case SCLEX_VBSCRIPT:
-            EditToggleLineComments(Globals.hwndEdit, L"'", false);
-            break;
-        case SCLEX_AVS:
-        case SCLEX_BASH:
-        case SCLEX_CMAKE:
-        case SCLEX_COFFEESCRIPT:
-        case SCLEX_CONF:
-        case SCLEX_MAKEFILE:
-        case SCLEX_NIM:
-        case SCLEX_PERL:
-        case SCLEX_POWERSHELL:
-        case SCLEX_PYTHON:
-        case SCLEX_R:
-        case SCLEX_RUBY:
-        case SCLEX_TCL:
-        case SCLEX_TOML:
-        case SCLEX_YAML:
-            EditToggleLineComments(Globals.hwndEdit, L"#", true);
-            break;
-        case SCLEX_AHKL:
-        case SCLEX_ASM:
-        case SCLEX_AU3:
-        case SCLEX_INNOSETUP:
-        case SCLEX_NSIS: // # could also be used instead
-        case SCLEX_PROPERTIES:
-        case SCLEX_REGISTRY:
-            EditToggleLineComments(Globals.hwndEdit, L";", true);
-            break;
-        case SCLEX_LUA:
-        case SCLEX_SQL:
-        case SCLEX_VHDL:
-            EditToggleLineComments(Globals.hwndEdit, L"--", true);
-            break;
-        case SCLEX_BATCH:
-            EditToggleLineComments(Globals.hwndEdit, L"rem ", true);
-            break;
-        case SCLEX_LATEX:
-        case SCLEX_MATLAB:
-            EditToggleLineComments(Globals.hwndEdit, L"%", true);
-            break;
-        // ------------------
-        case SCLEX_NULL:
-        case SCLEX_CSS:
-        case SCLEX_DIFF:
-        case SCLEX_JSON:
-        case SCLEX_MARKDOWN:
-        default:
-            // do nothing
-            break;
+        WCHAR comment[8] = { L'\0' };
+        bool const bAtStart = _GetLineCommentStrg(comment, COUNTOF(comment));
+        if (StrIsNotEmpty(comment)) {
+            EditToggleLineComments(Globals.hwndEdit, comment, bAtStart);
         }
     }
     break;
 
 
     case IDM_EDIT_STREAMCOMMENT: {
-        switch (SciCall_GetLexer()) {
-        case SCLEX_D:
-        //~EditEncloseSelection(Globals.hwndEdit, L"/+", L"+/");
-        //~break;
-        case SCLEX_AVS:
-        case SCLEX_CPP:
-        case SCLEX_CSS:
-        case SCLEX_HTML:
-        case SCLEX_NSIS:
-        case SCLEX_RUST:
-        case SCLEX_SQL:
-        case SCLEX_VHDL:
-        case SCLEX_XML:
-            EditEncloseSelection(L"/*", L"*/");
-            break;
-        case SCLEX_INNOSETUP:
-        case SCLEX_PASCAL:
-            EditEncloseSelection(L"{", L"}");
-            break;
-        case SCLEX_LUA:
-            EditEncloseSelection(L"--[[", L"]]");
-            break;
-        case SCLEX_COFFEESCRIPT:
-            EditEncloseSelection(L"###", L"###");
-            break;
-        case SCLEX_MATLAB:
-            EditEncloseSelection(L"%{", L"%}");
-            break;
-        // ------------------
-        case SCLEX_NULL:
-        case SCLEX_AHKL:
-        case SCLEX_ASM:
-        case SCLEX_AU3:
-        case SCLEX_BASH:
-        case SCLEX_BATCH:
-        case SCLEX_CMAKE:
-        case SCLEX_CONF:
-        case SCLEX_DIFF:
-        case SCLEX_JSON:
-        case SCLEX_LATEX:
-        case SCLEX_MAKEFILE:
-        case SCLEX_MARKDOWN:
-        case SCLEX_NIM:
-        case SCLEX_PERL:
-        case SCLEX_POWERSHELL:
-        case SCLEX_PROPERTIES:
-        case SCLEX_PYTHON:
-        case SCLEX_R:
-        case SCLEX_REGISTRY:
-        case SCLEX_RUBY:
-        case SCLEX_TCL:
-        case SCLEX_TOML:
-        case SCLEX_VB:
-        case SCLEX_VBSCRIPT:
-        case SCLEX_YAML:
-        default:
-            // do nothing
-            break;
+        WCHAR cmnt_beg[8] = { L'\0' };
+        WCHAR cmnt_end[8] = { L'\0' };
+        _GetStreamCommentStrgs(cmnt_beg, cmnt_end, COUNTOF(cmnt_beg));
+        if (StrIsNotEmpty(cmnt_beg)) {
+            EditEncloseSelection(cmnt_beg, cmnt_end);
         }
     }
     break;
@@ -7193,13 +7228,10 @@ void HandleColorDefClicked(HWND hwnd, const DocPos position)
                              (int)GetRValue(rgbNew), (int)GetGValue(rgbNew), (int)GetBValue(rgbNew));
         }
 
-        DocPos const saveTargetBeg = SciCall_GetTargetStart();
-        DocPos const saveTargetEnd = SciCall_GetTargetEnd();
-
+        _SAVE_TARGET_RANGE_;
         SciCall_SetTargetRange(firstPos, lastPos);
         SciCall_ReplaceTarget(length, wchColor);
-
-        SciCall_SetTargetRange(saveTargetBeg, saveTargetEnd); //restore
+        _RESTORE_TARGET_RANGE_;
 
         EditUpdateVisibleIndicators();
     }
@@ -7336,8 +7368,10 @@ static bool  _IsIMEOpenInNoNativeMode()
 //
 //  !!! Set correct SCI_SETMODEVENTMASK in _InitializeSciEditCtrl()
 //
-inline static LRESULT _MsgNotifyLean(const LPNMHDR pnmh, const SCNotification* const scn)
+inline static LRESULT _MsgNotifyLean(const SCNotification* const scn)
 {
+    const LPNMHDR pnmh = (LPNMHDR)scn;
+
     static int _mod_insdel_token = -1;
     // --- check only mandatory events (must be fast !!!) ---
     if (pnmh->idFrom == IDC_EDIT) {
@@ -7401,9 +7435,11 @@ inline static LRESULT _MsgNotifyLean(const LPNMHDR pnmh, const SCNotification* c
 //
 //  !!! Set correct SCI_SETMODEVENTMASK in _InitializeSciEditCtrl()
 //
-static LRESULT _MsgNotifyFromEdit(HWND hwnd, const LPNMHDR pnmh, const SCNotification* const scn)
+static LRESULT _MsgNotifyFromEdit(HWND hwnd, const SCNotification* const scn)
 {
-    static int  _s_indic_click_modifiers = SCMOD_NORM;
+    const LPNMHDR pnmh = (LPNMHDR)scn;
+
+    static int _s_indic_click_modifiers = SCMOD_NORM;
     static int _mod_insdel_token         = -1;
 
     switch (pnmh->code) {
@@ -7659,17 +7695,17 @@ static LRESULT _MsgNotifyFromEdit(HWND hwnd, const LPNMHDR pnmh, const SCNotific
             EditBookmarkToggle(Globals.hwndEdit, SciCall_LineFromPosition(scn->position), scn->modifiers);
             break;
         case MARGIN_SCI_LINENUM:
-            //~SciCall_GotoLine(SciCall_LineFromPosition(scn->position));
-            break;
+        //~SciCall_GotoLine(SciCall_LineFromPosition(scn->position));
+        // fallthrough
         default:
-            break;
+            return 0;
         }
         break;
 
 
     case SCN_MARGINRIGHTCLICK: {
-        POINT pt = {-1,-1};
-        MsgContextMenu(hwnd, SCN_MARGINRIGHTCLICK, (WPARAM)scn, MAKELPARAM(pt.x,pt.y));
+        POINT pt = { -1, -1 };
+        MsgContextMenu(hwnd, SCN_MARGINRIGHTCLICK, MAKEWPARAM(pt.x, pt.y), (LPARAM)scn);
     }
     break;
 
@@ -7748,17 +7784,19 @@ LRESULT MsgNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 #define GUARD_RETURN(res) { _guard = false; return(res); }
 
-    LPNMHDR const pnmh = (LPNMHDR)lParam;
     const SCNotification* const scn = (SCNotification*)lParam;
 
     if (!CheckNotifyChangeEvent()) {
-        LRESULT const res = _MsgNotifyLean(pnmh, scn);
+        LRESULT const res = _MsgNotifyLean(scn);
         GUARD_RETURN(res);
     }
 
-    switch(pnmh->idFrom) {
+    const LPNMHDR pnmh = (LPNMHDR)scn;
+
+    switch (pnmh->idFrom) {
+
     case IDC_EDIT: {
-        LRESULT const res = _MsgNotifyFromEdit(hwnd, pnmh, scn);
+        LRESULT const res = _MsgNotifyFromEdit(hwnd, scn);
         GUARD_RETURN(res);
     }
 
@@ -7859,7 +7897,7 @@ LRESULT MsgNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
                     WCHAR wch[64] = {L'\0'};
                     GetLngString(msgid, wch, COUNTOF(wch));
-                    INT_PTR const answer = InfoBoxLng(MB_YESNO | MB_ICONWARNING, NULL, IDS_MUI_WARN_NORMALIZE_EOLS, wch);
+                    WORD const answer = INFOBOX_ANSW(InfoBoxLng(MB_YESNO | MB_ICONWARNING, NULL, IDS_MUI_WARN_NORMALIZE_EOLS, wch));
 
                     if ((IDOK == answer) || (IDYES == answer)) {
                         PostWMCommand(hwnd, eol_cmd);
@@ -8758,10 +8796,10 @@ static void  _UpdateStatusbarDelayed(bool bForceRedraw)
     DocPos const iSelStart         = SciCall_GetSelectionStart();
     DocPos const iSelEnd           = SciCall_GetSelectionEnd();
 
-    bool const   bIsSelectionEmpty = SciCall_IsSelectionEmpty();
-    bool const   bIsSelCharCountable = !(bIsSelectionEmpty || Sci_IsMultiOrRectangleSelection());
-    bool const   bIsMultiSelection = Sci_IsMultiSelection();
-    bool const   bIsWindowFindReplace = IsWindow(Globals.hwndDlgFindReplace);
+    bool const bIsSelectionEmpty = SciCall_IsSelectionEmpty();
+    bool const bIsMultiSelection = Sci_IsMultiOrRectangleSelection();
+    bool const bIsSelCharCountable = !bIsSelectionEmpty && !bIsMultiSelection;
+    bool const bIsWindowFindReplace = IsWindow(Globals.hwndDlgFindReplace);
 
     bool bIsUpdateNeeded = bForceRedraw;
 
@@ -8869,7 +8907,7 @@ static void  _UpdateStatusbarDelayed(bool bForceRedraw)
                              || (s_iSelEnd != iSelEnd)) || (s_bIsMultiSelection != bIsMultiSelection)) {
             static WCHAR tchSelB[64] = { L'\0' };
             if (bIsSelCharCountable) {
-                const DocPos iSel = (DocPos)SendMessage(Globals.hwndEdit, SCI_COUNTCHARACTERS, iSelStart, iSelEnd);
+                DocPos const iSel = Flags.bHugeFileLoadState ? (iSelEnd - iSelStart) : SciCall_CountCharacters(iSelStart, iSelEnd);
                 StringCchPrintf(tchSel, COUNTOF(tchSel), DOCPOSFMTW, iSel);
                 FormatNumberStr(tchSel, COUNTOF(tchSel), 0);
                 StrFormatByteSize((iSelEnd - iSelStart), tchSelB, COUNTOF(tchSelB));
@@ -8884,9 +8922,14 @@ static void  _UpdateStatusbarDelayed(bool bForceRedraw)
                 tchSelB[0] = L'0';
                 tchSelB[1] = L'\0';
             }
-            StringCchPrintf(tchStatusBar[STATUS_SELECTION], txtWidth, L"%s%s%s",
-                            g_mxSBPrefix[STATUS_SELECTION], tchSel, g_mxSBPostfix[STATUS_SELECTION]);
 
+            if (Flags.bHugeFileLoadState) {
+                StringCchPrintf(tchStatusBar[STATUS_SELECTION], txtWidth, L"%s%s%s",
+                                g_mxSBPrefix[STATUS_SELCTBYTES], tchSel, g_mxSBPostfix[STATUS_SELCTBYTES]);
+            } else {
+                StringCchPrintf(tchStatusBar[STATUS_SELECTION], txtWidth, L"%s%s%s",
+                                g_mxSBPrefix[STATUS_SELECTION], tchSel, g_mxSBPostfix[STATUS_SELECTION]);
+            }
             StringCchPrintf(tchStatusBar[STATUS_SELCTBYTES], txtWidth, L"%s%s%s",
                             g_mxSBPrefix[STATUS_SELCTBYTES], tchSelB, g_mxSBPostfix[STATUS_SELCTBYTES]);
 
@@ -8943,8 +8986,8 @@ static void  _UpdateStatusbarDelayed(bool bForceRedraw)
 
         if (Settings.EvalTinyExprOnSelection) {
             if (bIsSelCharCountable) {
-                static char chSeBuf[LARGE_BUFFER];
-                static WCHAR wchSelBuf[LARGE_BUFFER];
+                static char chSeBuf[LARGE_BUFFER] = { '\0' };
+                static WCHAR wchSelBuf[LARGE_BUFFER] = { L'\0' };
                 DocPos const iSelSize = SciCall_GetSelText(NULL);
                 if (iSelSize < COUNTOF(chSeBuf)) { // should be fast !
                     SciCall_GetSelText(chSeBuf);
@@ -9262,6 +9305,7 @@ void UpdateSaveSettingsCmds()
 void UpdateUI()
 {
     struct SCNotification scn;
+    ZeroMemory(&scn, sizeof(struct SCNotification));
     scn.nmhdr.hwndFrom = Globals.hwndEdit;
     scn.nmhdr.idFrom = IDC_EDIT;
     scn.nmhdr.code = SCN_UPDATEUI;
@@ -9880,7 +9924,7 @@ bool FileLoad(bool bDontSave, bool bNew, bool bReload,
     if (!bReload && !PathIsExistingFile(szFilePath)) {
         bool bCreateFile = s_flagQuietCreate;
         if (!bCreateFile) {
-            INT_PTR const answer = InfoBoxLng(MB_YESNO | MB_ICONQUESTION, NULL, IDS_MUI_ASK_CREATE, PathFindFileName(szFilePath));
+            WORD const answer = INFOBOX_ANSW(InfoBoxLng(MB_YESNO | MB_ICONQUESTION, NULL, IDS_MUI_ASK_CREATE, PathFindFileName(szFilePath)));
             if ((IDOK == answer) || (IDYES == answer)) {
                 bCreateFile = true;
             }
@@ -10397,13 +10441,13 @@ bool FileSave(bool bSaveAlways, bool bAsk, bool bSaveAs, bool bSaveCopy, bool bP
         // if current file is settings/config file: ask to start
         if (Flags.bSettingsFileSoftLocked && !s_flagAppIsClosing) {
             //~ LoadSettings(); NOT all settings will be applied ...
-            INT_PTR answer = 0;
+            WORD answer = 0;
             if (Settings.SaveSettings) {
                 WCHAR tch[256] = { L'\0' };
                 LoadLngStringW(IDS_MUI_RELOADCFGSEX, tch, COUNTOF(tch));
-                answer = InfoBoxLng(MB_YESNO | MB_ICONWARNING, L"ReloadExSavedCfg", IDS_MUI_RELOADSETTINGS, tch);
+                answer = INFOBOX_ANSW(InfoBoxLng(MB_YESNO | MB_ICONWARNING, L"ReloadExSavedCfg", IDS_MUI_RELOADSETTINGS, tch));
             } else {
-                answer = InfoBoxLng(MB_YESNO | MB_ICONINFORMATION, L"ReloadExSavedCfg", IDS_MUI_RELOADSETTINGS, L"");
+                answer = INFOBOX_ANSW(InfoBoxLng(MB_YESNO | MB_ICONINFORMATION, L"ReloadExSavedCfg", IDS_MUI_RELOADSETTINGS, L""));
             }
             if ((IDOK == answer) || (IDYES == answer)) {
                 DialogNewWindow(Globals.hwndMain, false, Globals.CurrentFile);
@@ -10623,6 +10667,7 @@ bool ActivatePrevInst()
 {
     HWND hwnd = NULL;
     COPYDATASTRUCT cds;
+    ZeroMemory(&cds, sizeof(COPYDATASTRUCT));
 
     if ((!Flags.bReuseWindow && !Flags.bSingleFileInstance) || s_flagStartAsTrayIcon || s_flagNewFromClipboard || s_flagPasteBoard) {
         return false;
@@ -10692,7 +10737,7 @@ bool ActivatePrevInst()
                 return true;
             }
             // IsWindowEnabled()
-            INT_PTR const answer = InfoBoxLng(MB_YESNO | MB_ICONWARNING, NULL, IDS_MUI_ERR_PREVWINDISABLED);
+            WORD const answer = INFOBOX_ANSW(InfoBoxLng(MB_YESNO | MB_ICONWARNING, NULL, IDS_MUI_ERR_PREVWINDISABLED));
             if ((IDOK == answer) || (IDYES == answer)) {
                 return false;
             }
@@ -10782,7 +10827,7 @@ bool ActivatePrevInst()
             return true;
         }
         // IsWindowEnabled()
-        INT_PTR const answer = InfoBoxLng(MB_YESNO | MB_ICONWARNING, NULL, IDS_MUI_ERR_PREVWINDISABLED);
+        WORD const answer = INFOBOX_ANSW(InfoBoxLng(MB_YESNO | MB_ICONWARNING, NULL, IDS_MUI_ERR_PREVWINDISABLED));
         return ((IDOK == answer) || (IDYES == answer)) ? false : true;;
     }
     return false;
@@ -10867,6 +10912,7 @@ bool RelaunchElevated(LPWSTR lpNewCmdLnArgs)
     }
 
     STARTUPINFO si;
+    ZeroMemory(&si, sizeof(STARTUPINFO));
     si.cb = sizeof(STARTUPINFO);
     GetStartupInfo(&si);
 
@@ -11065,8 +11111,7 @@ void UpdateMouseDWellTime()
 void ShowZoomCallTip()
 {
     int const delayClr = Settings2.ZoomTooltipTimeout;
-    if (delayClr >= (10*USER_TIMER_MINIMUM))
-    {
+    if (delayClr >= (10*USER_TIMER_MINIMUM)) {
         int const iZoomLevelPercent = SciCall_GetZoom();
 
         static char chToolTip[32] = { '\0' };
@@ -11092,8 +11137,7 @@ void ShowZoomCallTip()
 void ShowWrapAroundCallTip(bool forwardSearch)
 {
     int const delayClr = Settings2.WrapAroundTooltipTimeout;
-    if (delayClr >= (10*USER_TIMER_MINIMUM))
-    {
+    if (delayClr >= (10*USER_TIMER_MINIMUM)) {
         char chToolTipFmt[64] = { '\0' };
         static char chToolTip[80] = { '\0' };
         if (forwardSearch) {

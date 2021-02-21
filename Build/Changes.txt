@@ -12,12 +12,10 @@ Rizonesoft Notepad3 --- CHANGELOG ---
 --------------------------------------------------------
 LEGEND:
 --------------------------------------------------------
-LEGEND:
---------------------------------------------------------
 1) NEW: (Added, Feature, Optimize)
-2) CHANGES:
-3) FIXES: (Debug)
-4) REMOVED:
+2) CHANGES: (Change, Enhancement)
+3) FIXES: (Correction, Debug)
+4) REMOVED: (Obsolete, Depreciate)
 5) TRANSLATIONS (MUI): (New Language)
 
 --------------------------------------------------------
@@ -34,7 +32,7 @@ UCD - (UCD)ARDET is an Encoding Detector Library
 
 
 ========================================================
-Current BETA/RC Version 5.21.207.(build_#) (2021-02-07)
+Current BETA/RC Version 5.21.220.(build_#) (2021-02-20)
 ========================================================
 
 --------------------------------------------------------
@@ -69,6 +67,11 @@ NEW:
 CHANGES:
 --------------------------------------------------------
 [.xxx.x]- .
+[.219.1]- Simple Line Comment Toggle handles each line separately (Line Edit after toggle will still set mode of 1st line = former behavior).
+[.219.1]- Menu move Line/Stream Comment items to Edit -> Selection top.
+[.218.1]- Find/Repl dialog - refactoring and minor fixes.
+[.213.1]- JSON5 enhancements to Scintilla's original JSON-Lexer.
+[.211.1]- Statusbar Selection-Info: switch to byte (instead of character) counting for huge files.
 [.205.1]- Revert minor insert date/time format changes.
 [.205.1]- Use user locale for date/time insert format: insert date before time & tab separated.
 [.124.1]- Tinyexpr evaluation of math constants "e" and "pi" not being separated from prepending text.
@@ -111,6 +114,17 @@ CHANGES:
 FIXES:
 --------------------------------------------------------
 [.xxx.x]- .
+[.220.1]- Toggle Comment: proper selection handling.
+[.219.1]- Do not move selection on search pattern change if in Replace-Dlg.
+[.219.1]- FJSON Lexer has comments enabled now.
+[.219.1]- F/R-Dialog - allow multi-line clipboard paste to Replace String combobox too.
+[.218.2]- F/R: fixes some issues around RegEx zero-length match/findings.
+[.218.1]- ReplaceAll. avoid busy loop (infinity) while replacing zero-length-match (RegExpr).
+[.218.1]- F/R dialog don't change selection by typing search pattern.
+[.218.1]- F/R show wrap-around tooltip only if message boxes are hidden.
+[.215.1]- JSON5 string line continuation.
+[.212.1]- Context-Menu Handling in Release Mode.
+[.211.1]- Burndown some VS Analyze Mode Infos/Warnings.
 [.205.1]- Wildcard search: unintentional wrap around.
 [.125.1]- AHKL lexer: visual brace matching mix-ups.
 [.124.1]- InfoBox message icon DPI scaling.

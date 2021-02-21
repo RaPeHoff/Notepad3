@@ -2192,7 +2192,7 @@ void CmdSaveSettingsNow()
             return;
         }
         if (dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
-            INT_PTR const answer = InfoBoxLng(MB_YESNO | MB_ICONWARNING, NULL, IDS_MUI_INIFILE_READONLY);
+            WORD const answer = INFOBOX_ANSW(InfoBoxLng(MB_YESNO | MB_ICONWARNING, NULL, IDS_MUI_INIFILE_READONLY));
             if ((IDOK == answer) || (IDYES == answer)) {
                 SetFileAttributes(Globals.IniFile, FILE_ATTRIBUTE_NORMAL); // override read-only attrib
                 Globals.bCanSaveIniFile = CanAccessPath(Globals.IniFile, GENERIC_WRITE);
@@ -2363,10 +2363,13 @@ bool MRU_AddFile(LPMRULIST pmru, LPWSTR pszFile, bool bRelativePath, bool bUnexp
 }
 
 
+#pragma warning(push)
+#pragma warning(disable : 6385 6386)
+
 bool MRU_Delete(LPMRULIST pmru, int iIndex)
 {
-    if (pmru) {
-        if (iIndex >= 0 || iIndex < pmru->iSize) {
+    if (pmru && iIndex < MRU_MAXITEMS) {
+        if (iIndex >= 0 && iIndex < pmru->iSize) {
             if (pmru->pszItems[iIndex]) {
                 LocalFree(pmru->pszItems[iIndex]);  // StrDup()
             }
@@ -2394,6 +2397,8 @@ bool MRU_Delete(LPMRULIST pmru, int iIndex)
     }
     return false;
 }
+
+#pragma warning(pop)
 
 
 bool MRU_Empty(LPMRULIST pmru, bool bExceptLeast)
