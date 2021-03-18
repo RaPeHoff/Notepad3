@@ -81,6 +81,37 @@ static char AutoCompleteWordCharSet[ANSI_CHAR_BUFFER] = { L'\0' };
 #define IsWhiteSpaceW(wch)  StrChrW(W_WhiteSpaceCharsDefault, (wch))
 #define IsAccelWhiteSpaceW(wch)  StrChrW(W_WhiteSpaceCharsAccelerated, (wch))
 
+
+static const char *const s_pColorRegEx = "#([0-9a-fA-F]){8}|#([0-9a-fA-F]){6}"; // ARGB, RGBA, RGB
+static const char *const s_pColorRegEx_A = "#([0-9a-fA-F]){8}";                 // no RGB search (BGRA)
+
+static const char *const s_pUnicodeRegEx = "(\\\\[uU|xX]([0-9a-fA-F]){4}|\\\\[xX]([0-9a-fA-F]){2})+";
+
+// https://mathiasbynens.be/demo/url-regex : @stephenhay
+//static const char* s_pUrlRegEx = "\\b(?:(?:https?|ftp|file)://|www\\.|ftp\\.)[^\\s/$.?#].[^\\s]*";
+
+// using  Gruber's  Liberal Regex Pattern for All URLs (https://gist.github.com/gruber/249502)
+/// => unfortunately to slow to use as scanner
+//static const char *const s_pUrlRegEx = "(?i)\\b((?:[a-z][\\w-]+:(?:/{1,3}|[a-z0-9%])|www\\d{0,3}[.]|[a-z0-9.\\-]+[.][a-z]{2,4}/)"
+//                                       "(?:[^\\s()<>]+|\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\))+"
+//                                       "(?:\\(([^\\s()<>]+|(\\([^\\s()<>]+\\)))*\\)|[^\\s`!()\\[\\]{};:'\".,<>?«»“”‘’]))";
+
+// --- pretty fast ---
+// https://www.regular-expressions.info/unicode.html
+// \p{L} :  any kind of letter from any language
+// \p{N} :  any kind of numeric character in any script
+// \p{S} :  math symbols, currency signs, dingbats, box-drawing characters, etc.
+
+//#define HYPLNK_REGEX_VALID_CDPT "a-zA-Z0-9\\u00A0-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFEF+&@#/%=~_|$"
+
+#define HYPLNK_REGEX_VALID_CDPT "\\p{L}\\p{N}\\p{S}+&@#/%=~_|$"
+
+static const char *const s_pUrlRegEx = "\\b(?:(?:https?|ftp|file)://|www\\.|ftp\\.)"
+                                       "(?:\\([-" HYPLNK_REGEX_VALID_CDPT "?!:,.]*\\)|[-" HYPLNK_REGEX_VALID_CDPT "?!:,.])*"
+                                       "(?:\\([-" HYPLNK_REGEX_VALID_CDPT "?!:,.]*\\)|[" HYPLNK_REGEX_VALID_CDPT "])";
+
+// ----------------------------------------------------------------------------
+
 enum AlignMask {
     ALIGN_LEFT = 0,
     ALIGN_RIGHT = 1,
@@ -220,6 +251,8 @@ void EditReplaceSelection(const char* text, bool bForceSel)
 //
 void EditInitWordDelimiter(HWND hwnd)
 {
+    UNUSED(hwnd);
+
     ZeroMemory(WordCharsDefault, COUNTOF(WordCharsDefault));
     ZeroMemory(WhiteSpaceCharsDefault, COUNTOF(WhiteSpaceCharsDefault));
     ZeroMemory(PunctuationCharsDefault, COUNTOF(PunctuationCharsDefault));
@@ -228,9 +261,9 @@ void EditInitWordDelimiter(HWND hwnd)
     //ZeroMemory(PunctuationCharsAccelerated, COUNTOF(PunctuationCharsAccelerated)); // empty!
 
     // 1st get/set defaults
-    SendMessage(hwnd, SCI_GETWORDCHARS, 0, (LPARAM)WordCharsDefault);
-    SendMessage(hwnd, SCI_GETWHITESPACECHARS, 0, (LPARAM)WhiteSpaceCharsDefault);
-    SendMessage(hwnd, SCI_GETPUNCTUATIONCHARS, 0, (LPARAM)PunctuationCharsDefault);
+    SciCall_GetWordChars(WordCharsDefault);
+    SciCall_GetWhiteSpaceChars(WhiteSpaceCharsDefault);
+    SciCall_GetPunctuationChars(PunctuationCharsDefault);
 
     // default word delimiter chars are whitespace & punctuation & line ends
     const char* lineEnds = "\r\n";
@@ -580,7 +613,7 @@ char* EditGetClipboardText(HWND hwnd, bool bCheckEncoding, int* pLineCount, int*
     int lineCount = 0;
     int lenLastLine = 0;
 
-    if ((bool)SendMessage(hwnd,SCI_GETPASTECONVERTENDINGS,0,0)) {
+    if (SciCall_GetPasteConvertEndings()) {
         char* ptmp = (char*)AllocMem((mlen+1)*2, HEAP_ZERO_MEMORY);
         if (ptmp) {
             char *s = pmch;
@@ -1703,12 +1736,11 @@ void EditSentenceCase(HWND hwnd)
 //
 //  EditURLEncode()
 //
-void EditURLEncode()
+void EditURLEncode(const bool isPathConvert)
 {
     if (SciCall_IsSelectionEmpty()) {
         return;
     }
-
     if (Sci_IsMultiOrRectangleSelection()) {
         InfoBoxLng(MB_ICONWARNING, NULL, IDS_MUI_SELRECTORMULTI);
         return;
@@ -1716,11 +1748,12 @@ void EditURLEncode()
 
     _SAVE_TARGET_RANGE_;
 
-    DocPos const iCurPos = SciCall_GetCurrentPos();
-    DocPos const iAnchorPos = SciCall_GetAnchor();
-    DocPos const iSelSize = SciCall_GetSelText(NULL) - 1;
+    DocPos const iSelStart = SciCall_GetSelectionStart();
+    //DocPos const iSelEnd = SciCall_GetSelectionEnd();
+    DocPos const iSelSize = SciCall_GetSelText(NULL) - 1; // w/o terminating zero
+    bool const bStraightSel = (SciCall_GetAnchor() <= SciCall_GetCurrentPos());
 
-    const char* const pszText = (const char*)SciCall_GetRangePointer(min_p(iCurPos, iAnchorPos), iSelSize);
+    const char* const pszText = (const char*)SciCall_GetRangePointer(iSelStart, iSelSize);
 
     WCHAR szTextW[INTERNET_MAX_URL_LENGTH+1];
     ptrdiff_t const cchTextW = MultiByteToWideChar(Encoding_SciCP, 0, pszText, (int)iSelSize, szTextW, INTERNET_MAX_URL_LENGTH);
@@ -1740,26 +1773,35 @@ void EditURLEncode()
     }
 
     DWORD cchEscapedW = (DWORD)cchEscaped;
+    if (isPathConvert) {
+        if (FAILED(PathCreateFromUrl(szTextW, pszEscapedW, &cchEscapedW, 0))) {
+            StringCchCopy(pszEscapedW, cchEscapedW, szTextW); // no op
+            cchEscapedW = (DWORD)StringCchLen(pszEscapedW, INTERNET_MAX_URL_LENGTH);
+        }
+        if (StrStr(pszEscapedW, L" ") != NULL) {
+            // quote paths with spaces in
+            StringCchCopy(szTextW, INTERNET_MAX_URL_LENGTH, pszEscapedW);
+            StringCchPrintf(pszEscapedW, INTERNET_MAX_URL_LENGTH, L"\"%s\"", szTextW);
+            cchEscapedW = (DWORD)StringCchLen(pszEscapedW, INTERNET_MAX_URL_LENGTH);
+        }
+    } else {
+        UrlEscapeEx(szTextW, pszEscapedW, &cchEscapedW, true);
+    }
 
-    UrlEscapeEx(szTextW, pszEscapedW, &cchEscapedW, true);
-
-    ptrdiff_t const cchEscapedEnc = WideCharToMultiByte(Encoding_SciCP, 0, pszEscapedW, cchEscapedW,
-                                    pszEscaped, (int)cchEscaped, NULL, NULL);
+    int const cchEscapedEnc = WideCharToMultiByte(Encoding_SciCP, 0, pszEscapedW, cchEscapedW,
+                                                  pszEscaped, (int)cchEscaped, NULL, NULL);
 
     _BEGIN_UNDO_ACTION_;
 
-    if (iCurPos < iAnchorPos) {
-        SciCall_SetTargetRange(iCurPos, iAnchorPos);
-    } else {
-        SciCall_SetTargetRange(iAnchorPos, iCurPos);
-    }
+    SciCall_TargetFromSelection();
     SciCall_ReplaceTarget(cchEscapedEnc, pszEscaped);
 
-    if (iCurPos < iAnchorPos) {
-        EditSetSelectionEx(iCurPos + cchEscapedEnc, iCurPos, -1, -1);
-    } else {
-        EditSetSelectionEx(iAnchorPos, iAnchorPos + cchEscapedEnc, -1, -1);
+    SciCall_SetSelectionStart(iSelStart);
+    SciCall_SetSelectionEnd(iSelStart + cchEscapedEnc);
+    if (!bStraightSel) {
+        SciCall_SwapMainAnchorCaret();
     }
+    EditEnsureSelectionVisible();
 
     _END_UNDO_ACTION_;
 
@@ -1774,12 +1816,11 @@ void EditURLEncode()
 //
 //  EditURLDecode()
 //
-void EditURLDecode()
+void EditURLDecode(const bool isPathConvert)
 {
     if (SciCall_IsSelectionEmpty()) {
         return;
     }
-
     if (Sci_IsMultiOrRectangleSelection()) {
         InfoBoxLng(MB_ICONWARNING, NULL, IDS_MUI_SELRECTORMULTI);
         return;
@@ -1787,20 +1828,21 @@ void EditURLDecode()
 
     _SAVE_TARGET_RANGE_;
 
-    DocPos const iCurPos = SciCall_GetCurrentPos();
-    DocPos const iAnchorPos = SciCall_GetAnchor();
-    DocPos const iSelSize = SciCall_GetSelText(NULL);
+    DocPos const iSelStart = SciCall_GetSelectionStart();
+    //DocPos const iSelEnd = SciCall_GetSelectionEnd();
+    DocPos const iSelSize = SciCall_GetSelText(NULL) - 1; // w/o terminating zero
+    bool const bStraightSel = (SciCall_GetAnchor() <= SciCall_GetCurrentPos());
 
-    const char* pszText = SciCall_GetRangePointer(min_p(iCurPos, iAnchorPos), iSelSize);
+    const char *pszText = SciCall_GetRangePointer(iSelStart, iSelSize);
 
-    LPWSTR pszTextW = AllocMem(iSelSize * sizeof(WCHAR), HEAP_ZERO_MEMORY);
+    LPWSTR pszTextW = AllocMem((iSelSize + 1) * sizeof(WCHAR), HEAP_ZERO_MEMORY);
     if (pszTextW == NULL) {
         return;
     }
 
-    /*ptrdiff_t cchTextW =*/ MultiByteToWideCharEx(Encoding_SciCP, 0, pszText, (iSelSize-1), pszTextW, iSelSize);
+    /*int cchTextW =*/ MultiByteToWideChar(Encoding_SciCP, 0, pszText, (int)iSelSize, pszTextW, (int)iSelSize);
 
-    size_t const cchUnescaped = iSelSize * 3;
+    size_t const cchUnescaped = iSelSize * 3 + 1;
     char* pszUnescaped = (char*)AllocMem(cchUnescaped, HEAP_ZERO_MEMORY);
     if (pszUnescaped == NULL) {
         FreeMem(pszTextW);
@@ -1815,27 +1857,40 @@ void EditURLDecode()
     }
 
     DWORD cchUnescapedW = (DWORD)cchUnescaped;
-    UrlUnescapeEx(pszTextW, pszUnescapedW, &cchUnescapedW);
+    if (isPathConvert) {
+        StrTrim(pszTextW, L"\\/ \"'");
+        if (FAILED(UrlCreateFromPath(pszTextW, pszUnescapedW, &cchUnescapedW, 0))) {
+            StringCchCopy(pszUnescapedW, cchUnescaped, pszTextW); // no op
+            cchUnescapedW = (DWORD)StringCchLen(pszUnescapedW, INTERNET_MAX_URL_LENGTH);
+        }
+    } else {
+        UrlUnescapeEx(pszTextW, pszUnescapedW, &cchUnescapedW);
+    }
 
     int const cchUnescapedDec = WideCharToMultiByte(Encoding_SciCP, 0, pszUnescapedW, cchUnescapedW,
                                 pszUnescaped, (int)cchUnescaped, NULL, NULL);
 
-    _BEGIN_UNDO_ACTION_;
+    // can URL be found by Hyperlink pattern matching ?
+    int matchLen = 0;
+    ptrdiff_t const pos = OnigRegExFind(s_pUrlRegEx, pszUnescaped, false, SciCall_GetEOLMode(), &matchLen);
+    bool const bIsValidConversion = isPathConvert ? ((pos >= 0) && (cchUnescapedDec == matchLen)) : true;
 
-    if (iCurPos < iAnchorPos) {
-        SciCall_SetTargetRange(iCurPos, iAnchorPos);
-    } else {
-        SciCall_SetTargetRange(iAnchorPos, iCurPos);
+    if (bIsValidConversion) {
+
+        _BEGIN_UNDO_ACTION_;
+
+        SciCall_TargetFromSelection();
+        SciCall_ReplaceTarget(cchUnescapedDec, pszUnescaped);
+
+        SciCall_SetSelectionStart(iSelStart);
+        SciCall_SetSelectionEnd(iSelStart + cchUnescapedDec);
+        if (!bStraightSel) {
+            SciCall_SwapMainAnchorCaret();
+        }
+        EditEnsureSelectionVisible();
+
+        _END_UNDO_ACTION_;
     }
-    SciCall_ReplaceTarget(cchUnescapedDec, pszUnescaped);
-
-    if (iCurPos < iAnchorPos) {
-        EditSetSelectionEx(iCurPos + cchUnescapedDec, iCurPos, -1, -1);
-    } else {
-        EditSetSelectionEx(iAnchorPos, iAnchorPos + cchUnescapedDec, -1, -1);
-    }
-
-    _END_UNDO_ACTION_;
 
     _RESTORE_TARGET_RANGE_;
 
@@ -1847,36 +1902,98 @@ void EditURLDecode()
 
 //=============================================================================
 //
+//  EditReplaceAllChr()
+//  search and replace chars must not be empty
+//
+void EditReplaceAllChr(const WCHAR chSearch, const WCHAR chReplace) {
+
+    if (SciCall_IsSelectionEmpty() || (chSearch == L'\0') || (chReplace == L'\0')) {
+        return;
+    }
+    if (Sci_IsMultiOrRectangleSelection()) {
+        InfoBoxLng(MB_ICONWARNING, NULL, IDS_MUI_SELRECTORMULTI);
+        return;
+    }
+
+    _SAVE_TARGET_RANGE_;
+
+    DocPos const iSelStart = SciCall_GetSelectionStart();
+    DocPos const iSelEnd = SciCall_GetSelectionEnd();
+    DocPos const iSelSize = SciCall_GetSelText(NULL) - 1; // w/o terminating zero
+    bool const bStraightSel = (SciCall_GetAnchor() <= SciCall_GetCurrentPos());
+
+    const char *pchText = SciCall_GetRangePointer(iSelStart, iSelSize);
+
+    int const reqsize = MultiByteToWideChar(Encoding_SciCP, 0, pchText, (int)iSelSize, NULL, 0);
+    LPWSTR const pwchText = AllocMem((reqsize + 1) * sizeof(WCHAR), HEAP_ZERO_MEMORY);
+    if (pwchText == NULL) {
+        return;
+    }
+    MultiByteToWideChar(Encoding_SciCP, 0, pchText, (int)iSelSize, pwchText, (int)reqsize);
+
+    StrReplChr(pwchText, chSearch, chReplace);
+
+    int const cchRepl = WideCharToMultiByte(Encoding_SciCP, 0, pwchText, reqsize, NULL, 0, NULL, NULL);
+    char * const pchReplace = (char *)AllocMem((cchRepl + 1), HEAP_ZERO_MEMORY);
+    if (pchReplace == NULL) {
+        FreeMem(pwchText);
+        return;
+    }
+    WideCharToMultiByte(Encoding_SciCP, 0, pwchText, reqsize, pchReplace, cchRepl, NULL, NULL);
+
+    _BEGIN_UNDO_ACTION_;
+
+    SciCall_TargetFromSelection();
+    SciCall_ReplaceTarget(cchRepl, pchReplace);
+
+    SciCall_SetSelectionStart(iSelStart);
+    SciCall_SetSelectionEnd(iSelEnd);
+    if (!bStraightSel) {
+        SciCall_SwapMainAnchorCaret();
+    }
+    EditEnsureSelectionVisible();
+    
+    _END_UNDO_ACTION_;
+
+    _RESTORE_TARGET_RANGE_;
+
+    FreeMem(pwchText);
+    FreeMem(pchReplace);
+}
+
+
+//=============================================================================
+//
 //  EditEscapeCChars()
 //
-void EditEscapeCChars(HWND hwnd)
-{
+void EditEscapeCChars(HWND hwnd) {
 
-    if (!SciCall_IsSelectionEmpty()) {
-        if (Sci_IsMultiOrRectangleSelection()) {
-            InfoBoxLng(MB_ICONWARNING, NULL, IDS_MUI_SELRECTORMULTI);
-            return;
-        }
-
-        EDITFINDREPLACE efr = INIT_EFR_DATA;
-        efr.hwnd = hwnd;
-
-        _BEGIN_UNDO_ACTION_;
-
-        StringCchCopyA(efr.szFind,COUNTOF(efr.szFind), "\\");
-        StringCchCopyA(efr.szReplace, COUNTOF(efr.szReplace), "\\\\");
-        EditReplaceAllInSelection(hwnd,&efr,false);
-
-        StringCchCopyA(efr.szFind, COUNTOF(efr.szFind), "\"");
-        StringCchCopyA(efr.szReplace, COUNTOF(efr.szReplace), "\\\"");
-        EditReplaceAllInSelection(hwnd,&efr,false);
-
-        StringCchCopyA(efr.szFind, COUNTOF(efr.szFind), "\'");
-        StringCchCopyA(efr.szReplace, COUNTOF(efr.szReplace), "\\\'");
-        EditReplaceAllInSelection(hwnd,&efr,false);
-
-        _END_UNDO_ACTION_;
+    if (SciCall_IsSelectionEmpty()) {
+        return;
     }
+    if (Sci_IsMultiOrRectangleSelection()) {
+        InfoBoxLng(MB_ICONWARNING, NULL, IDS_MUI_SELRECTORMULTI);
+        return;
+    }
+
+    EDITFINDREPLACE efr = INIT_EFR_DATA;
+    efr.hwnd = hwnd;
+
+    _BEGIN_UNDO_ACTION_;
+
+    StringCchCopyA(efr.szFind, COUNTOF(efr.szFind), "\\");
+    StringCchCopyA(efr.szReplace, COUNTOF(efr.szReplace), "\\\\");
+    EditReplaceAllInSelection(hwnd, &efr, false);
+
+    StringCchCopyA(efr.szFind, COUNTOF(efr.szFind), "\"");
+    StringCchCopyA(efr.szReplace, COUNTOF(efr.szReplace), "\\\"");
+    EditReplaceAllInSelection(hwnd, &efr, false);
+
+    StringCchCopyA(efr.szFind, COUNTOF(efr.szFind), "\'");
+    StringCchCopyA(efr.szReplace, COUNTOF(efr.szReplace), "\\\'");
+    EditReplaceAllInSelection(hwnd, &efr, false);
+
+    _END_UNDO_ACTION_;
 }
 
 
@@ -1884,34 +2001,34 @@ void EditEscapeCChars(HWND hwnd)
 //
 //  EditUnescapeCChars()
 //
-void EditUnescapeCChars(HWND hwnd)
-{
+void EditUnescapeCChars(HWND hwnd) {
 
-    if (!SciCall_IsSelectionEmpty()) {
-        if (Sci_IsMultiOrRectangleSelection()) {
-            InfoBoxLng(MB_ICONWARNING, NULL, IDS_MUI_SELRECTORMULTI);
-            return;
-        }
-
-        EDITFINDREPLACE efr = INIT_EFR_DATA;
-        efr.hwnd = hwnd;
-
-        _BEGIN_UNDO_ACTION_;
-
-        StringCchCopyA(efr.szFind,FNDRPL_BUFFER,"\\\\");
-        StringCchCopyA(efr.szReplace,FNDRPL_BUFFER,"\\");
-        EditReplaceAllInSelection(hwnd,&efr,false);
-
-        StringCchCopyA(efr.szFind,FNDRPL_BUFFER,"\\\"");
-        StringCchCopyA(efr.szReplace,FNDRPL_BUFFER,"\"");
-        EditReplaceAllInSelection(hwnd,&efr,false);
-
-        StringCchCopyA(efr.szFind,FNDRPL_BUFFER,"\\\'");
-        StringCchCopyA(efr.szReplace,FNDRPL_BUFFER,"\'");
-        EditReplaceAllInSelection(hwnd,&efr,false);
-
-        _END_UNDO_ACTION_;
+    if (SciCall_IsSelectionEmpty()) {
+        return;
     }
+    if (Sci_IsMultiOrRectangleSelection()) {
+        InfoBoxLng(MB_ICONWARNING, NULL, IDS_MUI_SELRECTORMULTI);
+        return;
+    }
+
+    EDITFINDREPLACE efr = INIT_EFR_DATA;
+    efr.hwnd = hwnd;
+
+    _BEGIN_UNDO_ACTION_;
+
+    StringCchCopyA(efr.szFind, FNDRPL_BUFFER, "\\\\");
+    StringCchCopyA(efr.szReplace, FNDRPL_BUFFER, "\\");
+    EditReplaceAllInSelection(hwnd, &efr, false);
+
+    StringCchCopyA(efr.szFind, FNDRPL_BUFFER, "\\\"");
+    StringCchCopyA(efr.szReplace, FNDRPL_BUFFER, "\"");
+    EditReplaceAllInSelection(hwnd, &efr, false);
+
+    StringCchCopyA(efr.szFind, FNDRPL_BUFFER, "\\\'");
+    StringCchCopyA(efr.szReplace, FNDRPL_BUFFER, "\'");
+    EditReplaceAllInSelection(hwnd, &efr, false);
+
+    _END_UNDO_ACTION_;
 }
 
 
@@ -2513,14 +2630,16 @@ static void  _EditMoveLines(bool bMoveUp)
     }
 
     DocPos const iSelBeg = SciCall_GetSelectionStart();
-    DocPos const iSelEnd = SciCall_GetSelectionEnd();
     DocLn  const iBegLine = SciCall_LineFromPosition(iSelBeg);
-    DocLn  const iEndLine = SciCall_LineFromPosition(iSelEnd);
+    DocPos const iSelEnd = SciCall_GetSelectionEnd();
+    DocLn const iEndLine = SciCall_LineFromPosition(iSelEnd);
 
     DocLn lastLine = Sci_GetLastDocLineNumber();
 
     if (Sci_GetNetLineLength(lastLine) == 0) {
-        --lastLine;
+        if (SciCall_PositionFromLine(iEndLine) < iSelEnd) {
+            --lastLine;
+        }
     }
 
     bool const bCanMove = bMoveUp ? (iBegLine > 0) : (iEndLine < lastLine);
@@ -2644,7 +2763,7 @@ void EditModifyLines(LPCWSTR pwszPrefix, LPCWSTR pwszAppend)
     DocLn iLineStart = SciCall_LineFromPosition(iSelStart);
     DocLn iLineEnd = SciCall_LineFromPosition(iSelEnd);
 
-    //if (iSelStart > SendMessage(hwnd,SCI_POSITIONFROMLINE,(WPARAM)iLineStart,0))
+    //if (iSelStart > SciCall_PositionFromLine(iLineStart))
     //  iLineStart++;
 
     if (iSelEnd <= SciCall_PositionFromLine(iLineEnd)) {
@@ -3247,7 +3366,7 @@ void EditEncloseSelection(LPCWSTR pwszOpen, LPCWSTR pwszClose)
     SciCall_SetSelectionStart(iSelStart + iLenOpen);
     SciCall_SetSelectionEnd(iSelEnd + iLenOpen);
     if (!bStraightSel) {
-        EditSetCaretToSelectionStart();
+        SciCall_SwapMainAnchorCaret();
     }
     EditEnsureSelectionVisible();
 
@@ -3393,7 +3512,7 @@ void EditToggleLineCommentsSimple(HWND hwnd, LPCWSTR pwszComment, bool bInsertAt
                     iSelStartOffset += (iSelStart <= iPos) ? 0 : cchComment;
                 }
                 DocPos const movedSelEnd = iSelEnd + iSelEndOffset;
-                iSelEndOffset += (movedSelEnd < iPos) ? 0 : cchComment;
+                iSelEndOffset += (movedSelEnd <= iPos) ? 0 : cchComment;
             }
             break;
             case 2:
@@ -3405,7 +3524,7 @@ void EditToggleLineCommentsSimple(HWND hwnd, LPCWSTR pwszComment, bool bInsertAt
     SciCall_SetSelectionStart(iSelStart + iSelStartOffset);
     SciCall_SetSelectionEnd(iSelEnd + iSelEndOffset);
     if (!bStraightSel) {
-        EditSetCaretToSelectionStart();
+        SciCall_SwapMainAnchorCaret();
     }
     EditEnsureSelectionVisible();
 
@@ -5016,7 +5135,6 @@ void EditSetSelectionEx(DocPos iAnchorPos, DocPos iCurrentPos, DocPos vSpcAnchor
         }
         SciCall_ChooseCaretX();
     }
-
     //~~~_END_UNDO_ACTION_;~~~
 }
 
@@ -5132,9 +5250,9 @@ void EditGetExcerpt(HWND hwnd,LPWSTR lpszExcerpt,DWORD cchExcerpt)
     tr.chrg.cpMax = min_cr((tr.chrg.cpMin + (DocPosCR)COUNTOF(tch)), (DocPosCR)SciCall_GetSelectionEnd());
     /*}
     else {
-      int iLine = SendMessage(hwnd,SCI_LINEFROMPOSITION,(WPARAM)iCurPos,0);
-      tr.chrg.cpMin = SendMessage(hwnd,SCI_POSITIONFROMLINE,(WPARAM)iLine,0);
-      tr.chrg.cpMax = min_cr(SendMessage(hwnd,SCI_GETLINEENDPOSITION,(WPARAM)iLine,0),(LONG)(tr.chrg.cpMin + COUNTOF(tchBuf2)));
+      int iLine = SciCall_LineFromPosition(iCurPos);
+      tr.chrg.cpMin = SciCall_PositionFromLine(iLine);
+      tr.chrg.cpMax = min_cr(SciCall_GetLineEndPosition(iLine),(LONG)(tr.chrg.cpMin + COUNTOF(tchBuf2)));
     }*/
     tr.chrg.cpMax = min_cr(tr.chrg.cpMax, (DocPosCR)Sci_GetDocEndPosition());
 
@@ -6724,7 +6842,7 @@ bool EditFindPrev(HWND hwnd, LPEDITFINDREPLACE lpefr, bool bExtendSelection, boo
     //DocPos const iSelStartPos = SciCall_GetSelectionStart();
     //DocPos const iSelEndPos = SciCall_GetSelectionEnd();
 
-    EditSetCaretToSelectionStart(); // fluent swittch between Next/Prev
+    EditSetCaretToSelectionStart(); // fluent switch between Next/Prev
     DocPos start = SciCall_GetCurrentPos();
     DocPos end = 0LL;
 
@@ -7672,33 +7790,23 @@ void EditUpdateIndicators(DocPos startPos, DocPos endPos, bool bClearOnly)
         return;
     }
     if (Settings.HyperlinkHotspot) {
-        // https://mathiasbynens.be/demo/url-regex : @stephenhay
-        //static const char* pUrlRegEx = "\\b(?:(?:https?|ftp|file)://|www\\.|ftp\\.)[^\\s/$.?#].[^\\s]*";
-
-        static const char* const pUrlRegEx = "\\b(?:(?:https?|ftp|file)://|www\\.|ftp\\.)"
-                                             "(?:\\([-a-z\\u00a1-\\uffff0-9+&@#/%=~_|$?!:,.]*\\)|[-a-z\\u00a1-\\uffff0-9+&@#/%=~_|$?!:,.])*"
-                                             "(?:\\([-a-z\\u00a1-\\uffff0-9+&@#/%=~_|$?!:,.]*\\)|[a-z\\u00a1-\\uffff0-9+&@#/%=~_|$])";
-
-        _UpdateIndicators(INDIC_NP3_HYPERLINK, INDIC_NP3_HYPERLINK_U, pUrlRegEx, startPos, endPos);
+        _UpdateIndicators(INDIC_NP3_HYPERLINK, INDIC_NP3_HYPERLINK_U, s_pUrlRegEx, startPos, endPos);
     } else {
         _ClearIndicatorInRange(INDIC_NP3_HYPERLINK, INDIC_NP3_HYPERLINK_U, startPos, endPos);
     }
 
     if (IsColorDefHotspotEnabled()) {
-        static const char* const pColorRegEx = "#([0-9a-fA-F]){8}|#([0-9a-fA-F]){6}"; // ARGB, RGBA, RGB
-        static const char* const pColorRegEx_A = "#([0-9a-fA-F]){8}"; // no RGB search (BGRA)
         if (Settings.ColorDefHotspot < 3) {
-            _UpdateIndicators(INDIC_NP3_COLOR_DEF, -1, pColorRegEx, startPos, endPos);
+            _UpdateIndicators(INDIC_NP3_COLOR_DEF, -1, s_pColorRegEx, startPos, endPos);
         } else {
-            _UpdateIndicators(INDIC_NP3_COLOR_DEF, -1, pColorRegEx_A, startPos, endPos);
+            _UpdateIndicators(INDIC_NP3_COLOR_DEF, -1, s_pColorRegEx_A, startPos, endPos);
         }
     } else {
         _ClearIndicatorInRange(INDIC_NP3_COLOR_DEF, INDIC_NP3_COLOR_DEF_T, startPos, endPos);
     }
 
     if (Settings.HighlightUnicodePoints) {
-        static const char* const pUnicodeRegEx = "(\\\\[uU|xX]([0-9a-fA-F]){4}|\\\\[xX]([0-9a-fA-F]){2})+";
-        _UpdateIndicators(INDIC_NP3_UNICODE_POINT, -1, pUnicodeRegEx, startPos, endPos);
+        _UpdateIndicators(INDIC_NP3_UNICODE_POINT, -1, s_pUnicodeRegEx, startPos, endPos);
     } else {
         _ClearIndicatorInRange(INDIC_NP3_UNICODE_POINT, -1, startPos, endPos);
     }
@@ -9104,7 +9212,6 @@ void EditBookmarkToggle(HWND hwnd, const DocLn ln, const int modifiers)
             }
         }
     }
-
     if (modifiers & SCMOD_ALT) {
         SciCall_GotoLine(ln);
     }

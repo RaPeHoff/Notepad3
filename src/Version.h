@@ -52,11 +52,14 @@
 
 #ifdef _DLL
 #define _SCI_BUILD                     L"Scintilla(dll) "
+#define _LXI_BUILD                     L"Lexilla(dll) "
 #else
 #define _SCI_BUILD                     L"Scintilla "
+#define _LXI_BUILD                     L"Lexilla "
 #endif
 
 #define VERSION_SCIVERSION             _SCI_BUILD _W(_STRG(_V(SCINTILLA_VER)))
+#define VERSION_LXIVERSION             _LXI_BUILD _W(_STRG(_V(LEXILLA_VER)))
 #define VERSION_ONIGURUMA              L"Oniguruma " _W(_STRG(_V(ONIGURUMA_REGEX_VER)))
 #define VERSION_UCHARDET               L"UChardet " _W(_STRG(_V(UCHARDET_VER)))
 #define VERSION_TINYEXPR               L"TinyExpr " _W(_STRG(_V(TINYEXPR_VER)))
@@ -74,8 +77,12 @@
 
 #if defined(_MSC_VER)
     #if (_MSC_VER == 1928)
-        #if (_MSC_FULL_VER >= 192829337)
-            #define VER_CPL     MS Visual C++ 2019 v16.8.5
+        #if (_MSC_FULL_VER >= 192829912)
+            #define VER_CPL     MS Visual C++ 2019 v16.9.1
+        #elif (_MSC_FULL_VER >= 192829910)
+            #define VER_CPL     MS Visual C++ 2019 v16.9.0
+        #elif (_MSC_FULL_VER >= 192829337)
+            #define VER_CPL     MS Visual C++ 2019 v16.8.(5-6)
         #elif (_MSC_FULL_VER >= 192829336)
             #define VER_CPL     MS Visual C++ 2019 v16.8.4
         #elif (_MSC_FULL_VER >= 192829335)

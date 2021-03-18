@@ -235,14 +235,13 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_TRANSL_AUTHOR   "(tr-TR) Turko-py tarafından Türkçe'ye çevirildi"
+    IDS_MUI_TRANSL_AUTHOR   "(tr-TR) Ghost tarafından Türkçe'ye çevirildi"
     IDS_MUI_TITLE_FIXBASE   " BASE (%s)"
     IDS_MUI_TITLE_RELCUR    " +++ %s: %s Stil +++"
     IDS_MUI_TITLE_FIXCUR    " %s: %s Stil"
     IDS_MUI_TITLE_RELARB    " +++ Stil '%s' (%s) +++"
     IDS_MUI_TITLE_FIXARB    " Stil '%s' (%s)"
     IDS_MUI_ASSOCIATED_EXT  "Associated filename extensions:"
-    IDS_MUI_EXAMPLE_TEXT    "The quick brown fox jumps over the lazy dog, 0123456789."
     IDS_MUI_ZERO_LEN_MATCH  "^ Zero-Length Match"
     IDS_MUI_GOTO_LINE       "Line (1 - %ti):"
     IDS_MUI_GOTO_COLUMN     "Column (1 - %ti):"

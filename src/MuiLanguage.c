@@ -38,9 +38,10 @@ MUILANGUAGE MUI_LanguageDLLs[] = {
     { IDS_MUI_LANG_AF_ZA, L"af-ZA", L"Afrikaans (Suid-Afrika)\t\t\t[%s]",          MAKELANGID(LANG_AFRIKAANS, SUBLANG_AFRIKAANS_SOUTH_AFRICA), false, false },
     { IDS_MUI_LANG_BE_BY, L"be-BY", L"Беларуская (Беларусь)\t\t\t[%s]",            MAKELANGID(LANG_BELARUSIAN, SUBLANG_BELARUSIAN_BELARUS), false, false },
     { IDS_MUI_LANG_DE_DE, L"de-DE", L"Deutsch (Deutschland)\t\t\t[%s]",            MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN), false, false },
+    { IDS_MUI_LANG_EL_GR, L"el-GR", L"Ελληνικά (Ελλάδα)\t\t\t[%s]",                MAKELANGID(LANG_GREEK, SUBLANG_GREEK_GREECE), false, false },
     { IDS_MUI_LANG_EN_GB, L"en-GB", L"English (United Kingdom)\t\t\t[%s]",         MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK), false, false },
+    { IDS_MUI_LANG_ES_419, L"es-419", L"Español (América Latina)\t\t\t[%s]",       MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_LATIN_AMERICA), false, false },
     { IDS_MUI_LANG_ES_ES, L"es-ES", L"Español (España)\t\t\t[%s]",                 MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_MODERN), false, false },
-    { IDS_MUI_LANG_ES_MX, L"es-MX", L"Español Mexicano (Mexico)\t\t\t[%s]",        MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_MEXICAN), false, false },
     { IDS_MUI_LANG_FR_FR, L"fr-FR", L"Français (France)\t\t\t[%s]",                MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH), false, false },
     { IDS_MUI_LANG_HI_IN, L"hi-IN", L"हिन्दी (भारत)\t\t\t[%s]",                       MAKELANGID(LANG_HINDI, SUBLANG_HINDI_INDIA), false, false },
     { IDS_MUI_LANG_HU_HU, L"hu-HU", L"Magyar (Magyarország)\t\t\t[%s]",            MAKELANGID(LANG_HUNGARIAN, SUBLANG_HUNGARIAN_HUNGARY), false, false },
@@ -48,7 +49,7 @@ MUILANGUAGE MUI_LanguageDLLs[] = {
     { IDS_MUI_LANG_IT_IT, L"it-IT", L"Italiano (Italia)\t\t\t[%s]",                MAKELANGID(LANG_ITALIAN, SUBLANG_ITALIAN), false, false },
     { IDS_MUI_LANG_JP_JP, L"ja-JP", L"日本語 （日本）\t\t\t[%s]",                   MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), false, false },
     { IDS_MUI_LANG_KO_KR, L"ko-KR", L"한국어 (대한민국)\t\t\t[%s]",                 MAKELANGID(LANG_KOREAN, SUBLANG_KOREAN), false, false },
-    { IDS_MUI_LANG_NL_NL, L"nl-NL", L"Nederlands (Nederland)\t\t\t[%s]",          MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH), false, false },
+    { IDS_MUI_LANG_NL_NL, L"nl-NL", L"Nederlands (Nederland)\t\t\t[%s]",           MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH), false, false },
     { IDS_MUI_LANG_PL_PL, L"pl-PL", L"Polski (Polska)\t\t\t[%s]",                  MAKELANGID(LANG_POLISH, SUBLANG_POLISH_POLAND), false, false },
     { IDS_MUI_LANG_PT_BR, L"pt-BR", L"Português Brasileiro (Brasil)\t\t\t[%s]",    MAKELANGID(LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN), false, false },
     { IDS_MUI_LANG_PT_PT, L"pt-PT", L"Português (Portugal)\t\t\t[%s]",             MAKELANGID(LANG_PORTUGUESE, SUBLANG_PORTUGUESE), false, false },
@@ -74,9 +75,10 @@ grepWinLng_t grepWinLangResName[] = {
     { MAKELANGID(LANG_AFRIKAANS, SUBLANG_AFRIKAANS_SOUTH_AFRICA),           L".\\lng\\gwLng\\Afrikaans (Suid-Afrika) [af-ZA].lang"},
     { MAKELANGID(LANG_BELARUSIAN, SUBLANG_BELARUSIAN_BELARUS),              L".\\lng\\gwLng\\Беларуская (Беларусь) [be-BY].lang"},
     { MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN),                              L".\\lng\\gwLng\\Deutsch (Deutschland) [de-DE].lang"},
+    { MAKELANGID(LANG_GREEK, SUBLANG_GREEK_GREECE),                         L".\\lng\\gwLng\\Ελληνικά (Ελλάδα) [el-GR].lang"},
     { MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK),                         L".\\lng\\gwLng\\English (United Kingdom) [en-GB].lang"},
+    { MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_LATIN_AMERICA),              L".\\lng\\gwLng\\Español (América Latina) [es-419].lang"},
     { MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_MODERN),                     L".\\lng\\gwLng\\Español (España) [es-ES].lang"},
-    { MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_MEXICAN),                    L".\\lng\\gwLng\\Español Mexicano (Mexico) [es-MX].lang"},
     { MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH),                              L".\\lng\\gwLng\\Français (France) [fr-FR].lang"},
     { MAKELANGID(LANG_HINDI, SUBLANG_HINDI_INDIA),                          L".\\lng\\gwLng\\हिन्दी (भारत) [hi-IN].lang"},
     { MAKELANGID(LANG_HUNGARIAN, SUBLANG_HUNGARIAN_HUNGARY),                L".\\lng\\gwLng\\Magyar (Magyarország) [hu-HU].lang"},
@@ -445,15 +447,19 @@ int LoadLngStringW(UINT uID, LPWSTR lpBuffer, int nBufferMax)
 //
 //  LoadLngStringW2MB()
 //
-static WCHAR s_tmpStringBuffer[512];
-
-ptrdiff_t LoadLngStringW2MB(UINT uID, LPSTR lpBuffer, int nBufferMax)
+int LoadLngStringW2MB(UINT uID, LPSTR lpBuffer, int nBufferMax)
 {
-    const int nLen = LoadStringW(Globals.hLngResContainer, uID, s_tmpStringBuffer, COUNTOF(s_tmpStringBuffer));
-    if (nLen == 0) {
-        LoadStringW(Globals.hInstance, uID, s_tmpStringBuffer, COUNTOF(s_tmpStringBuffer));
+    int len = 0;
+    WCHAR * const pBuffer = (WCHAR *)AllocMem(sizeof(WCHAR) * nBufferMax, HEAP_ZERO_MEMORY);
+    if (pBuffer) {
+        const int nLen = LoadStringW(Globals.hLngResContainer, uID, pBuffer, nBufferMax);
+        if (nLen == 0) {
+            LoadStringW(Globals.hInstance, uID, pBuffer, nBufferMax);
+        }
+        len = WideCharToMultiByte(Encoding_SciCP, 0, pBuffer, -1, lpBuffer, nBufferMax, NULL, NULL);
+        FreeMem(pBuffer);
     }
-    return WideCharToMultiByteEx(CP_UTF8, 0, s_tmpStringBuffer, -1, lpBuffer, nBufferMax, NULL, NULL);
+    return len;
 }
 
 //=============================================================================
@@ -473,7 +479,7 @@ int LoadLngStringA(UINT uID, LPSTR lpBuffer, int nBufferMax)
 //
 int FormatLngStringW(LPWSTR lpOutput, int nOutput, UINT uIdFormat, ...)
 {
-    WCHAR* pBuffer = AllocMem(sizeof(WCHAR) * nOutput, HEAP_ZERO_MEMORY);
+    WCHAR* const pBuffer = AllocMem(sizeof(WCHAR) * nOutput, HEAP_ZERO_MEMORY);
     if (pBuffer) {
         if (LoadLngStringW(uIdFormat, pBuffer, nOutput)) {
             StringCchVPrintfW(lpOutput, nOutput, pBuffer, (LPVOID)((PUINT_PTR)& uIdFormat + 1));
@@ -490,7 +496,7 @@ int FormatLngStringW(LPWSTR lpOutput, int nOutput, UINT uIdFormat, ...)
 //
 int FormatLngStringA(LPSTR lpOutput, int nOutput, UINT uIdFormat, ...)
 {
-    CHAR* pBuffer = AllocMem(sizeof(CHAR) * nOutput, HEAP_ZERO_MEMORY);
+    CHAR* const pBuffer = AllocMem(sizeof(CHAR) * nOutput, HEAP_ZERO_MEMORY);
     if (pBuffer) {
         if (LoadLngStringA(uIdFormat, pBuffer, nOutput)) {
             StringCchVPrintfA(lpOutput, nOutput, pBuffer, (LPVOID)((PUINT_PTR)& uIdFormat + 1));
